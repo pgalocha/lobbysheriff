@@ -1,6 +1,12 @@
-# 🛡️ LobbySheriff
+<p align="center">
+  <img src="docs/assets/logo.jpg" alt="LobbySheriff — FACEIT Stats Cockpit" width="700">
+</p>
 
-**FACEIT Stats Cockpit** — acompanha a evolução de grupos de amigos no CS2 através da FACEIT Data API, com rankings comparativos e a eleição semanal do **LobbySheriff da Semana**.
+<h1 align="center">LobbySheriff</h1>
+
+<p align="center">
+  <strong>FACEIT Stats Cockpit</strong> — acompanha a evolução de grupos de amigos no CS2 através da FACEIT Data API, com rankings comparativos e a eleição semanal do <strong>LobbySheriff da Semana</strong>.
+</p>
 
 > 🚧 Projeto em desenvolvimento ativo. Fase atual: **Fase 1 — serviço de estatísticas em Go**.
 
