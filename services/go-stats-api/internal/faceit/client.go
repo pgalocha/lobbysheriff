@@ -3,6 +3,10 @@
 // Só cobre os endpoints de que o go-stats-api precisa e só descodifica os
 // campos que usamos. A API key vai no header Authorization e nunca aparece em
 // erros nem em logs.
+//
+// Limites da FACEIT: 20 pedidos por segundo por key (headers RateLimit-*,
+// medido em 2026-11-24). A key é uma só para todos os ambientes, por isso o
+// Client limita o seu próprio ritmo (Options.RateLimit) abaixo desse valor.
 package faceit
 
 import (
@@ -15,6 +19,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 // GameCS2 é o identificador do Counter-Strike 2 na FACEIT.
@@ -35,6 +41,9 @@ type Options struct {
 	Timeout time.Duration
 	// HTTPClient opcional (ex.: para testes ou transports instrumentados).
 	HTTPClient *http.Client
+	// RateLimit: máximo de pedidos por segundo feitos por este Client. Os
+	// pedidos acima do ritmo esperam (respeitando o ctx). Zero = sem limite.
+	RateLimit int
 }
 
 // Client chama a FACEIT Data API v4. É seguro para uso concorrente.
@@ -42,6 +51,7 @@ type Client struct {
 	baseURL *url.URL
 	apiKey  string
 	http    *http.Client
+	limiter *rate.Limiter // nil = sem limite
 }
 
 // New valida as opções e cria o Client.
@@ -65,7 +75,15 @@ func New(opts Options) (*Client, error) {
 		hc = &http.Client{Timeout: opts.Timeout}
 	}
 
-	return &Client{baseURL: u, apiKey: opts.APIKey, http: hc}, nil
+	if opts.RateLimit < 0 {
+		return nil, errors.New("faceit: rate limit não pode ser negativo")
+	}
+	c := &Client{baseURL: u, apiKey: opts.APIKey, http: hc}
+	if opts.RateLimit > 0 {
+		// Burst 1: pedidos espaçados de forma uniforme, sem rajadas.
+		c.limiter = rate.NewLimiter(rate.Limit(opts.RateLimit), 1)
+	}
+	return c, nil
 }
 
 // get faz GET a path (já com os segmentos escapados) e descodifica o JSON em out.
@@ -75,6 +93,12 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 	target := c.baseURL.String() + path
 	if len(query) > 0 {
 		target += "?" + query.Encode()
+	}
+
+	if c.limiter != nil {
+		if err := c.limiter.Wait(ctx); err != nil {
+			return fmt.Errorf("faceit: GET %s: à espera do rate limit: %w", path, err)
+		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, http.NoBody)
@@ -99,7 +123,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 			Method:     http.MethodGet,
 			Path:       path,
 			StatusCode: resp.StatusCode,
-			RetryAfter: parseRetryAfter(resp.Header.Get("Retry-After"), time.Now()),
+			RetryAfter: retryAfter(resp),
 		}
 	}
 

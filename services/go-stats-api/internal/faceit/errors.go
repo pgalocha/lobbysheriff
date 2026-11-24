@@ -25,7 +25,9 @@ type APIError struct {
 	Method     string
 	Path       string
 	StatusCode int
-	// RetryAfter vem do header Retry-After (429/503); zero se ausente.
+	// RetryAfter: quanto esperar antes de tentar de novo. Vem do Retry-After
+	// ou, num 429, do RateLimit-Reset (mínimo 1s, a janela da FACEIT).
+	// Zero se a resposta não o indicar.
 	RetryAfter time.Duration
 }
 
@@ -47,6 +49,24 @@ func (e *APIError) Unwrap() error {
 	default:
 		return nil
 	}
+}
+
+// rateLimitWindow é a janela do rate limit da FACEIT (RateLimit-Limit: 20;w=1).
+const rateLimitWindow = time.Second
+
+// retryAfter calcula APIError.RetryAfter a partir dos headers da resposta.
+func retryAfter(resp *http.Response) time.Duration {
+	if d := parseRetryAfter(resp.Header.Get("Retry-After"), time.Now()); d > 0 {
+		return d
+	}
+	if resp.StatusCode != http.StatusTooManyRequests {
+		return 0
+	}
+	// RateLimit-Reset: segundos até a janela reabrir (pode ser 0, "menos de 1s").
+	if s, err := strconv.Atoi(resp.Header.Get("RateLimit-Reset")); err == nil && s > 0 {
+		return time.Duration(s) * time.Second
+	}
+	return rateLimitWindow
 }
 
 // parseRetryAfter aceita segundos ("30") ou uma data HTTP; devolve zero se
