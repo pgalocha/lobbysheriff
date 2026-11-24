@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Recursos comuns a todos os ambientes.
+# Adicionar aqui os manifests de cada serviço à medida que forem criados, ex.:
+#   - go-stats-api/deployment.yaml
+#   - go-stats-api/service.yaml
+#   - php-players-api/deployment.yaml
+#   - php-players-api/service.yaml
+#   - frontend/deployment.yaml
+#   - gateway/ingress.yaml
+resources: []
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: lobbysheriff
+    includeSelectors: false

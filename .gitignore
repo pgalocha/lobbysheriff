@@ -6,6 +6,7 @@
 *.key
 *.p12
 *.crt
+k8s/**/secrets.env
 
 # ─── Go (services/go-stats-api) ──────────────────────────────────
 bin/
