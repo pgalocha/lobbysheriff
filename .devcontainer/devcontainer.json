@@ -21,7 +21,7 @@
       "minikube": "none"
     },
     // Node só para ferramentas de contratos (Redocly, Portman, Newman) e, mais tarde, o frontend.
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2": {
       "version": "26"
     },
     "ghcr.io/devcontainers/features/github-cli:1": {},
