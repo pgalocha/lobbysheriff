@@ -1,0 +1,50 @@
+{
+  "name": "LobbySheriff",
+  "dockerComposeFile": ["../docker-compose.yml", "compose.devcontainer.yml"],
+  "service": "dev",
+  "runServices": ["dev", "mysql", "redis"],
+  "workspaceFolder": "/workspaces/lobbysheriff",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+
+  // Corre no host (Ubuntu/WSL) antes de o Compose arrancar: o Compose precisa do .env.
+  "initializeCommand": "test -f .env || cp .env.example .env",
+
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.27",
+      "golangciLintVersion": "2.15.0"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "none",
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Usa o Docker do host: permite `docker compose` e `docker build` dentro do container.
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  "forwardPorts": [8080],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-azuretools.vscode-containers",
+        "docker.docker",
+        "redhat.vscode-yaml",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "go.lintTool": "golangci-lint",
+        "go.lintOnSave": "package",
+        "go.toolsManagement.autoUpdate": false,
+        "[go]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+        }
+      }
+    }
+  }
+}

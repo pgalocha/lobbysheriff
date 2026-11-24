@@ -1,0 +1,153 @@
+name: go-stats-api
+
+# Corre em TODOS os PRs para master/staging (sem filtro `paths`), para poder ser
+# um check obrigatório no ruleset. Quando o PR não mexe no go-stats-api, o job
+# `changes` faz os restantes ficarem "skipped", e o GitHub conta um job skipped
+# como sucesso num check obrigatório.
+on:
+  pull_request:
+    branches: [master, staging]
+  push:
+    branches: [master, staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SERVICE_DIR: services/go-stats-api
+  MIGRATIONS_DIR: services/go-stats-api/migrations
+
+jobs:
+  changes:
+    name: Deteção de alterações
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      service: ${{ steps.diff.outputs.service }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: diff
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          paths=("$SERVICE_DIR" .github/workflows/go-stats-api.yml .github/scripts/check-migrations.sh)
+          if [ -z "$BASE_SHA" ] || [[ "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            changed=true   # sem base fiável: corre tudo
+          elif git diff --quiet "$BASE_SHA" HEAD -- "${paths[@]}"; then
+            changed=false
+          else
+            changed=true
+          fi
+          echo "service=$changed" >> "$GITHUB_OUTPUT"
+          echo "go-stats-api alterado: $changed"
+
+  test:
+    name: Testes e lint
+    needs: changes
+    if: needs.changes.outputs.service == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Mesma versão do golangci-lint do Dev Container; a imagem já traz Go.
+    container: golangci/golangci-lint:v2.15.0
+    defaults:
+      run:
+        working-directory: services/go-stats-api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: go mod tidy sem alterações
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: Formatação
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::corre gofmt -w ."; exit 1; }
+
+      - name: Testes
+        run: go test -race -count=1 ./...
+
+      - name: Lint
+        run: golangci-lint run ./...
+
+  migrations:
+    name: Migrations (MySQL 8.4)
+    needs: changes
+    if: needs.changes.outputs.service == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.4
+        # Credenciais descartáveis, só existem dentro deste job.
+        env:
+          MYSQL_ROOT_PASSWORD: root-ci
+          MYSQL_DATABASE: lobbysheriff_stats
+          MYSQL_USER: stats
+          MYSQL_PASSWORD: stats-ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot-ci --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: "3306"
+      STATS_DB_NAME: lobbysheriff_stats
+      STATS_DB_USER: stats
+      STATS_DB_PASSWORD: stats-ci
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # precisa do histórico para comparar com o branch de destino
+          persist-credentials: false
+
+      - name: Regras (imutáveis, por ordem, pares up/down)
+        env:
+          # PR: o branch de destino. Push: o commit anterior do branch.
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: .github/scripts/check-migrations.sh "$BASE_SHA" "$MIGRATIONS_DIR"
+
+      # As migrations correm a partir da imagem real do serviço (a mesma que
+      # vai para o ambiente), o que também testa o embed e o .dockerignore.
+      - name: Build da imagem
+        run: docker build -t go-stats-api:ci "$SERVICE_DIR"
+
+      - name: Aplicar, reverter e reaplicar
+        run: |
+          migrate() {
+            docker run --rm --network host \
+              -e MYSQL_HOST -e MYSQL_PORT -e STATS_DB_NAME -e STATS_DB_USER -e STATS_DB_PASSWORD \
+              go-stats-api:ci migrate "$@"
+          }
+          expect() {
+            got="$(migrate version | jq -r 'select(.msg == "schema") | "\(.version) \(.dirty)"')"
+            if [ "$got" != "$1 false" ]; then
+              echo "::error::$2: esperava versão $1 (dirty=false), obtive '$got'"
+              exit 1
+            fi
+            echo "✔ $2: versão $1"
+          }
+
+          latest="$(ls "$MIGRATIONS_DIR"/*.up.sql | sed -E 's#.*/0*([0-9]+)_.*#\1#' | sort -n | tail -n1)"
+          count="$(ls "$MIGRATIONS_DIR"/*.up.sql | wc -l)"
+
+          migrate up;              expect "$latest" "up a partir de vazio"
+          migrate down "$count";   expect 0         "down de todas as migrations"
+          migrate up;              expect "$latest" "up depois do down"
+          migrate up;              expect "$latest" "up repetido (sem alterações)"

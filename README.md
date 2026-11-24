@@ -43,9 +43,11 @@ Vue.js ──► Nginx Gateway ──► go-stats-api ──► FACEIT Data API 
 
 ```
 lobbysheriff/
+├── .devcontainer/         # Ambiente de desenvolvimento (Dev Container)
 ├── .github/workflows/     # CI por serviço
 ├── contracts/openapi/     # Contratos HTTP (OpenAPI)
 ├── gateway/               # Configuração Nginx
+├── infra/                 # Infraestrutura local (init do MySQL, …)
 ├── observability/         # Prometheus e Grafana
 ├── services/
 │   ├── go-stats-api/      # Microsserviço Go + Fiber
@@ -58,10 +60,13 @@ lobbysheriff/
 
 ### Pré-requisitos
 
-- Go 1.23+
-- Docker e Docker Compose
-- [golang-migrate](https://github.com/golang-migrate/migrate) e [golangci-lint](https://golangci-lint.run/)
+- Git e Docker (com Docker Compose)
+- VS Code com a extensão [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - Uma **API Key server-side** da FACEIT ([developers.faceit.com](https://developers.faceit.com/))
+
+Não é preciso instalar Go nem outras ferramentas no host: o Dev Container traz Go 1.27,
+golangci-lint, [golang-migrate](https://github.com/golang-migrate/migrate), kubectl, gh e
+os clientes MySQL/Redis.
 
 ### Configuração
 
@@ -69,7 +74,16 @@ lobbysheriff/
 git clone git@github.com:pgalocha/lobbysheriff.git
 cd lobbysheriff
 cp .env.example .env   # define FACEIT_API_KEY e restantes variáveis
-docker compose up -d
+code .                 # e depois: "Dev Containers: Reopen in Container"
+```
+
+O Dev Container arranca automaticamente o MySQL (um schema e um utilizador por serviço) e o
+Redis, na mesma rede (`mysql:3306`, `redis:6379`). Para correr tudo em containers, sem o
+editor:
+
+```bash
+docker compose up -d --build
+curl localhost:8080/livez
 ```
 
 > ⚠️ A `FACEIT_API_KEY` é usada apenas no backend e nunca deve ser exposta ao frontend nem commitada.

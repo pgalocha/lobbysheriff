@@ -1,0 +1,18 @@
+# Override usado apenas pelo Dev Container: junta o serviço "dev" à
+# infraestrutura de ../docker-compose.yml.
+# Nota: com vários ficheiros Compose, os caminhos relativos resolvem a partir
+# do diretório do PRIMEIRO ficheiro (a raiz do repositório).
+services:
+  dev:
+    build:
+      context: .devcontainer
+      dockerfile: Dockerfile
+    command: sleep infinity
+    env_file: .env
+    volumes:
+      - .:/workspaces/lobbysheriff:cached
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
