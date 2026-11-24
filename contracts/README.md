@@ -24,12 +24,16 @@ cd services/go-stats-api && go generate ./... && cd -
 # 4. Implementar os handlers novos: até lá, o código não compila
 #    (internal/server/handlers.go tem de implementar api.ServerInterface)
 
-# 5. Gerar a coleção Postman e testar contra a API local
+# 5. Acrescentar casos a TestResponsesMatchContract
+#    (services/go-stats-api/internal/server/server_test.go): um por cada resposta
+#    documentada da operação, incluindo erros (400, 404, 503…). Sem isso o teste falha.
+
+# 6. Gerar a coleção Postman e testar contra a API local
 scripts/contracts.sh postman
 scripts/contracts.sh newman
 ```
 
-Faz commit do contrato, do código gerado e da coleção juntos.
+Faz commit do contrato, do código gerado, dos testes e da coleção juntos.
 
 ## O que garante o cumprimento do contrato
 
@@ -37,7 +41,7 @@ Faz commit do contrato, do código gerado e da coleção juntos.
 |---|---|
 | Compilação | Os handlers implementam a interface gerada do contrato |
 | Runtime | Middleware valida cada pedido contra o contrato e responde 400 com os detalhes |
-| `go test` | Cada resposta é validada contra o contrato (status, content-type, schema); as rotas da app e as do contrato têm de coincidir |
+| `go test` | Cada resposta é validada contra o contrato (status, content-type, schema); as rotas da app e as do contrato têm de coincidir; cada resposta documentada (operação + status) tem de ter um caso de teste |
 | CI · `contracts` | Lint (Redocly), *breaking changes* face ao branch de destino (oasdiff), coleções Postman atualizadas |
 | CI · `go-stats-api` | Código gerado atualizado; coleção Postman corrida com o Newman contra a stack real |
 
