@@ -122,7 +122,13 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	}
 	defer func() { _ = db.Close() }()
 
-	rdb := redis.NewClient(&redis.Options{Addr: cfg.Redis.Addr(), Password: cfg.Redis.Password})
+	// ContextTimeoutEnabled: os timeouts de leitura/escrita respeitam o contexto,
+	// para o health check não ultrapassar o seu prazo com o Redis pendurado.
+	rdb := redis.NewClient(&redis.Options{
+		Addr:                  cfg.Redis.Addr(),
+		Password:              cfg.Redis.Password,
+		ContextTimeoutEnabled: true,
+	})
 	defer func() { _ = rdb.Close() }()
 
 	checker := health.New(healthCheckTimeout, logger)

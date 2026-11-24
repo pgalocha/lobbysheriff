@@ -59,7 +59,7 @@ else
     case "$status" in
       M*|D*|T*) fail "migration já existente foi alterada ou apagada: $path — cria uma nova migration em vez de a editar" ;;
     esac
-  done < <(git diff --name-status --no-renames "$base" HEAD -- "$dir")
+  done < <(git diff --name-status --no-renames "$base" HEAD -- "$dir/*.sql")
 
   base_max="$(git ls-tree --name-only "$base" -- "$dir/" | up_versions | tail -n1)"
   base_max="${base_max:-0}"
@@ -68,7 +68,7 @@ else
     if [ "$v" -le "$base_max" ]; then
       fail "migration nova com versão $v, mas o destino já vai na $base_max — renumera-a para uma versão superior"
     fi
-  done < <(git diff --name-only --diff-filter=A --no-renames "$base" HEAD -- "$dir" | up_versions)
+  done < <(git diff --name-only --diff-filter=A --no-renames "$base" HEAD -- "$dir/*.sql" | up_versions)
 
   echo "Base: $base (última versão $base_max)"
 fi
