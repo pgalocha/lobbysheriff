@@ -1,0 +1,179 @@
+{
+  "_": {
+    "postman_id": "31aa4f27-4e51-47e0-b00d-271e9a6d923f"
+  },
+  "item": [
+    {
+      "name": "health",
+      "description": {
+        "content": "Estado do serviço e das dependências",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "name": "Liveness",
+            "description": {
+              "content": "Indica apenas que o processo está vivo. Não verifica o MySQL nem o Redis,\npara o Kubernetes não reiniciar a app quando uma dependência falha.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "livez"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain"
+              }
+            ],
+            "method": "GET",
+            "body": {}
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Validate status 2xx \npm.test(\"[GET]::/livez - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
+                  "// Validate response time \npm.test(\"[GET]::/livez - Response time is less than 2000ms\", function () {\n    pm.expect(pm.response.responseTime).to.be.below(2000);\n});\n",
+                  "// Validate if response header has matching content-type\npm.test(\"[GET]::/livez - Content-Type is text/plain\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/plain\");\n});\n"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "name": "Readiness",
+            "description": {
+              "content": "Pronto para receber tráfego quando todas as dependências estão disponíveis.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "readyz"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain"
+              }
+            ],
+            "method": "GET",
+            "body": {}
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Validate status 2xx \npm.test(\"[GET]::/readyz - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
+                  "// Validate response time \npm.test(\"[GET]::/readyz - Response time is less than 2000ms\", function () {\n    pm.expect(pm.response.responseTime).to.be.below(2000);\n});\n",
+                  "// Validate if response header has matching content-type\npm.test(\"[GET]::/readyz - Content-Type is text/plain\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/plain\");\n});\n"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "name": "Estado detalhado",
+          "request": {
+            "name": "Estado detalhado",
+            "description": {
+              "content": "Estado e latência de cada dependência. Os detalhes dos erros vão só para\no log, para não expor hosts nem utilizadores.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "health"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "body": {}
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Validate status 2xx \npm.test(\"[GET]::/health - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
+                  "// Validate response time \npm.test(\"[GET]::/health - Response time is less than 2000ms\", function () {\n    pm.expect(pm.response.responseTime).to.be.below(2000);\n});\n",
+                  "// Validate if response header has matching content-type\npm.test(\"[GET]::/health - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
+                  "// Validate if response has JSON Body \npm.test(\"[GET]::/health - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"status\",\"checks\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"up\",\"down\"]},\"checks\":{\"type\":\"object\",\"description\":\"Resultado por dependência (mysql, redis, …)\",\"additionalProperties\":false}}}\n\n// Validate if response matches JSON schema \npm.test(\"[GET]::/health - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "any",
+      "value": "http://localhost:8080",
+      "key": "baseUrl"
+    }
+  ],
+  "info": {
+    "name": "LobbySheriff · go-stats-api",
+    "version": {
+      "raw": "0.1.0",
+      "major": 0,
+      "minor": 1,
+      "patch": 0,
+      "prerelease": [],
+      "build": [],
+      "string": "0.1.0"
+    },
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Sincronização com a FACEIT, snapshots, partidas, rankings e LobbySheriff da Semana.\n\nEste ficheiro é a fonte de verdade da API: o código Go é gerado a partir dele\n(`go generate ./...` em `services/go-stats-api`) e a CI falha se a implementação\nou a coleção Postman divergirem.\n",
+      "type": "text/plain"
+    }
+  }
+}

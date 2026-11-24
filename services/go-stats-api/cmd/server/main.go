@@ -135,7 +135,10 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	checker.Add("mysql", db.PingContext)
 	checker.Add("redis", func(ctx context.Context) error { return rdb.Ping(ctx).Err() })
 
-	app := server.New(checker)
+	app, err := server.New(checker, server.Options{CORSAllowedOrigins: cfg.CORSAllowedOrigins})
+	if err != nil {
+		return err
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

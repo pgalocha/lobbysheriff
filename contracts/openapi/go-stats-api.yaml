@@ -1,0 +1,142 @@
+openapi: 3.0.3
+
+info:
+  title: LobbySheriff · go-stats-api
+  version: 0.1.0
+  description: |
+    Sincronização com a FACEIT, snapshots, partidas, rankings e LobbySheriff da Semana.
+
+    Este ficheiro é a fonte de verdade da API: o código Go é gerado a partir dele
+    (`go generate ./...` em `services/go-stats-api`) e a CI falha se a implementação
+    ou a coleção Postman divergirem.
+  license:
+    name: Proprietary — todos os direitos reservados
+    url: https://github.com/pgalocha/lobbysheriff/blob/master/LICENSE
+
+servers:
+  - url: http://localhost:8080
+    description: Local (docker compose / Dev Container)
+
+tags:
+  - name: health
+    description: Estado do serviço e das dependências
+
+paths:
+  /livez:
+    get:
+      operationId: getLiveness
+      summary: Liveness
+      description: |
+        Indica apenas que o processo está vivo. Não verifica o MySQL nem o Redis,
+        para o Kubernetes não reiniciar a app quando uma dependência falha.
+      tags: [health]
+      responses:
+        "200":
+          description: Processo vivo
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /readyz:
+    get:
+      operationId: getReadiness
+      summary: Readiness
+      description: Pronto para receber tráfego quando todas as dependências estão disponíveis.
+      tags: [health]
+      responses:
+        "200":
+          description: Todas as dependências disponíveis
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "503":
+          description: Pelo menos uma dependência indisponível
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Service Unavailable
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Estado detalhado
+      description: |
+        Estado e latência de cada dependência. Os detalhes dos erros vão só para
+        o log, para não expor hosts nem utilizadores.
+      tags: [health]
+      responses:
+        "200":
+          description: Todas as dependências disponíveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthReport"
+        "503":
+          description: Pelo menos uma dependência indisponível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthReport"
+
+components:
+  schemas:
+    HealthStatus:
+      type: string
+      enum: [up, down]
+
+    HealthCheck:
+      type: object
+      additionalProperties: false
+      required: [status, latency_ms]
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        latency_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+
+    HealthReport:
+      type: object
+      additionalProperties: false
+      required: [status, checks]
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        checks:
+          type: object
+          description: Resultado por dependência (mysql, redis, …)
+          additionalProperties:
+            $ref: "#/components/schemas/HealthCheck"
+          example:
+            mysql: { status: up, latency_ms: 3 }
+            redis: { status: up, latency_ms: 1 }
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Mensagem legível
+          example: pedido inválido
+        details:
+          type: array
+          description: Detalhes da validação, quando o pedido não cumpre o contrato
+          items:
+            type: string
+
+  responses:
+    BadRequest:
+      description: O pedido não cumpre o contrato
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

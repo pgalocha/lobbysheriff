@@ -7,14 +7,19 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config é a configuração do go-stats-api.
 type Config struct {
-	Env   string
-	Port  int
-	MySQL MySQL
-	Redis Redis
+	Env  string
+	Port int
+	// Origens autorizadas a chamar a API a partir do browser (CORS), ex.: o
+	// Swagger UI local. Vazio = CORS desativado (em staging/produção o
+	// frontend e a API partilham a origem através do gateway).
+	CORSAllowedOrigins []string
+	MySQL              MySQL
+	Redis              Redis
 }
 
 // MySQL é a ligação ao schema do go-stats-api.
@@ -50,8 +55,9 @@ func Load() (Config, error) {
 	l := loader{errs: &errs}
 
 	cfg := Config{
-		Env:  l.string("APP_ENV", "local"),
-		Port: l.port("GO_STATS_API_PORT", 8080),
+		Env:                l.string("APP_ENV", "local"),
+		Port:               l.port("GO_STATS_API_PORT", 8080),
+		CORSAllowedOrigins: l.list("CORS_ALLOWED_ORIGINS"),
 		MySQL: MySQL{
 			Host:     l.string("MYSQL_HOST", "mysql"),
 			Port:     l.port("MYSQL_PORT", 3306),
@@ -86,6 +92,17 @@ func (l loader) string(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// list lê uma lista separada por vírgulas, ignorando entradas vazias.
+func (l loader) list(key string) []string {
+	var out []string
+	for _, v := range strings.Split(os.Getenv(key), ",") {
+		if v = strings.TrimSpace(v); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 func (l loader) required(key string) string {

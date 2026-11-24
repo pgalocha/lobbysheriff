@@ -1,0 +1,309 @@
+{
+    "item": [
+        {
+            "name": "health",
+            "description": "Estado do serviço e das dependências",
+            "item": [
+                {
+                    "id": "f72236d1-1d6a-44df-b811-8e3532a477f7",
+                    "name": "Liveness",
+                    "request": {
+                        "name": "Liveness",
+                        "description": {
+                            "content": "Indica apenas que o processo está vivo. Não verifica o MySQL nem o Redis,\npara o Kubernetes não reiniciar a app quando uma dependência falha.\n",
+                            "type": "text/plain"
+                        },
+                        "url": {
+                            "path": [
+                                "livez"
+                            ],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "query": [],
+                            "variable": []
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "text/plain"
+                            }
+                        ],
+                        "method": "GET",
+                        "body": {},
+                        "auth": null
+                    },
+                    "response": [
+                        {
+                            "id": "185befd5-a981-4cfb-9b38-0cfcaa07380c",
+                            "name": "Processo vivo",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "livez"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/plain"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "text/plain"
+                                }
+                            ],
+                            "body": "OK",
+                            "cookie": [],
+                            "_postman_previewlanguage": "text"
+                        }
+                    ],
+                    "event": [],
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    }
+                },
+                {
+                    "id": "3a57e16a-7719-4248-b35a-ebcde7cadcaa",
+                    "name": "Readiness",
+                    "request": {
+                        "name": "Readiness",
+                        "description": {
+                            "content": "Pronto para receber tráfego quando todas as dependências estão disponíveis.",
+                            "type": "text/plain"
+                        },
+                        "url": {
+                            "path": [
+                                "readyz"
+                            ],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "query": [],
+                            "variable": []
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "text/plain"
+                            }
+                        ],
+                        "method": "GET",
+                        "body": {},
+                        "auth": null
+                    },
+                    "response": [
+                        {
+                            "id": "3702e7f2-980a-4f7a-a5cb-af9a2af07c2d",
+                            "name": "Todas as dependências disponíveis",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "readyz"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/plain"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "text/plain"
+                                }
+                            ],
+                            "body": "OK",
+                            "cookie": [],
+                            "_postman_previewlanguage": "text"
+                        },
+                        {
+                            "id": "5002d1b4-da3f-4f21-b2c0-24b5a29ea3cb",
+                            "name": "Pelo menos uma dependência indisponível",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "readyz"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/plain"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "Service Unavailable",
+                            "code": 503,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "text/plain"
+                                }
+                            ],
+                            "body": "Service Unavailable",
+                            "cookie": [],
+                            "_postman_previewlanguage": "text"
+                        }
+                    ],
+                    "event": [],
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    }
+                },
+                {
+                    "id": "65320645-1396-41ec-943b-c3bf07911b3e",
+                    "name": "Estado detalhado",
+                    "request": {
+                        "name": "Estado detalhado",
+                        "description": {
+                            "content": "Estado e latência de cada dependência. Os detalhes dos erros vão só para\no log, para não expor hosts nem utilizadores.\n",
+                            "type": "text/plain"
+                        },
+                        "url": {
+                            "path": [
+                                "health"
+                            ],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "query": [],
+                            "variable": []
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "method": "GET",
+                        "body": {},
+                        "auth": null
+                    },
+                    "response": [
+                        {
+                            "id": "526d9d35-682a-40cb-b4a6-f92aed14a1a3",
+                            "name": "Todas as dependências disponíveis",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "health"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"status\": \"down\",\n  \"checks\": {\n    \"mysql\": {\n      \"status\": \"up\",\n      \"latency_ms\": 3\n    },\n    \"redis\": {\n      \"status\": \"up\",\n      \"latency_ms\": 1\n    }\n  }\n}",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
+                        },
+                        {
+                            "id": "803fcb9a-1751-47f2-b6d6-8b34618d1219",
+                            "name": "Pelo menos uma dependência indisponível",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "health"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "Service Unavailable",
+                            "code": 503,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"status\": \"down\",\n  \"checks\": {\n    \"mysql\": {\n      \"status\": \"up\",\n      \"latency_ms\": 3\n    },\n    \"redis\": {\n      \"status\": \"up\",\n      \"latency_ms\": 1\n    }\n  }\n}",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
+                        }
+                    ],
+                    "event": [],
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080"
+        }
+    ],
+    "info": {
+        "_postman_id": "31aa4f27-4e51-47e0-b00d-271e9a6d923f",
+        "name": "LobbySheriff · go-stats-api",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": {
+            "content": "Sincronização com a FACEIT, snapshots, partidas, rankings e LobbySheriff da Semana.\n\nEste ficheiro é a fonte de verdade da API: o código Go é gerado a partir dele\n(`go generate ./...` em `services/go-stats-api`) e a CI falha se a implementação\nou a coleção Postman divergirem.\n",
+            "type": "text/plain"
+        }
+    }
+}

@@ -1,0 +1,12 @@
+# Configuração do oapi-codegen. Gera, a partir do contrato:
+#   - os tipos (models)
+#   - a ServerInterface (Fiber v3): os handlers têm de a implementar, senão não compila
+#   - o contrato embebido (GetSwagger), usado para validar pedidos e respostas
+package: api
+output: api.gen.go
+generate:
+  models: true
+  fiber-v3-server: true
+  embedded-spec: true
+output-options:
+  skip-prune: true # gera também os schemas ainda não usados em operações (ex.: Error)

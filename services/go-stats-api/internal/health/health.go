@@ -19,14 +19,14 @@ type CheckFunc func(ctx context.Context) error
 
 // Result é o resultado de uma verificação individual.
 type Result struct {
-	Status    string `json:"status"`
-	LatencyMS int64  `json:"latency_ms"`
+	Status    string
+	LatencyMS int64
 }
 
 // Report agrega os resultados de todas as verificações.
 type Report struct {
-	Status string            `json:"status"`
-	Checks map[string]Result `json:"checks"`
+	Status string
+	Checks map[string]Result
 }
 
 // Healthy indica se todas as dependências estão disponíveis.
