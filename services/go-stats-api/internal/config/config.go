@@ -32,6 +32,12 @@ type FACEIT struct {
 	APIKey  string
 	BaseURL string
 	Timeout time.Duration
+	// RateLimit: pedidos por segundo à FACEIT (a key permite 20/s e é
+	// partilhada por todos os ambientes, por isso o valor por omissão é 10).
+	RateLimit int
+	// MaxRetries: novas tentativas (backoff exponencial) em 429, 5xx e erros
+	// de rede. 0 desativa.
+	MaxRetries int
 }
 
 // Validate falha se faltar algo necessário para chamar a FACEIT.
@@ -91,9 +97,11 @@ func Load() (Config, error) {
 			Password: l.string("REDIS_PASSWORD", ""),
 		},
 		FACEIT: FACEIT{
-			APIKey:  l.string("FACEIT_API_KEY", ""),
-			BaseURL: l.string("FACEIT_API_BASE_URL", "https://open.faceit.com/data/v4"),
-			Timeout: l.duration("FACEIT_HTTP_TIMEOUT", 10*time.Second),
+			APIKey:     l.string("FACEIT_API_KEY", ""),
+			BaseURL:    l.string("FACEIT_API_BASE_URL", "https://open.faceit.com/data/v4"),
+			Timeout:    l.duration("FACEIT_HTTP_TIMEOUT", 10*time.Second),
+			RateLimit:  l.intRange("FACEIT_RATE_LIMIT", 10, 1, 20),
+			MaxRetries: l.intRange("FACEIT_MAX_RETRIES", 3, 0, 10),
 		},
 	}
 
@@ -171,4 +179,22 @@ func (l loader) duration(key string, fallback time.Duration) time.Duration {
 		return 0
 	}
 	return d
+}
+
+// intRange lê um inteiro entre min e max (inclusive).
+func (l loader) intRange(key string, fallback, minV, maxV int) int {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		*l.errs = append(*l.errs, fmt.Errorf("%s inválida %q: %w", key, v, err))
+		return 0
+	}
+	if n < minV || n > maxV {
+		*l.errs = append(*l.errs, fmt.Errorf("%s fora do intervalo %d-%d: %d", key, minV, maxV, n))
+		return 0
+	}
+	return n
 }

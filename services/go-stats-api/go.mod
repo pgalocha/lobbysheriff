@@ -8,6 +8,7 @@ require (
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/redis/go-redis/v9 v9.24.0
+	golang.org/x/time v0.16.0
 )
 
 require (
@@ -42,7 +43,6 @@ require (
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

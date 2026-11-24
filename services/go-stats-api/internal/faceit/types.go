@@ -3,6 +3,8 @@ package faceit
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
+	"time"
 )
 
 // Player é um jogador FACEIT (GET /players e /players/{player_id}).
@@ -56,12 +58,82 @@ type MatchSummary struct {
 	GameID          string `json:"game_id"`
 	GameMode        string `json:"game_mode"`
 	CompetitionName string `json:"competition_name"`
+	// CompetitionType: "matchmaking" (fila normal), "hub", "championship", ...
+	CompetitionType string `json:"competition_type"`
 	Status          string `json:"status"`
 	StartedAt       int64  `json:"started_at"`
 	FinishedAt      int64  `json:"finished_at"`
 	FaceitURL       string `json:"faceit_url"`
 	// Results: vencedor ("faction1"/"faction2") e resultado por fação.
 	Results MatchResult `json:"results"`
+	// Teams: as duas fações ("faction1", "faction2") com os jogadores.
+	Teams map[string]HistoryTeam `json:"teams"`
+}
+
+// HistoryTeam é uma fação numa partida do histórico.
+type HistoryTeam struct {
+	TeamID   string          `json:"team_id"`
+	Nickname string          `json:"nickname"`
+	Players  []HistoryPlayer `json:"players"`
+}
+
+// HistoryPlayer é um jogador de uma fação no histórico.
+type HistoryPlayer struct {
+	PlayerID   string `json:"player_id"`
+	Nickname   string `json:"nickname"`
+	Avatar     string `json:"avatar"`
+	SkillLevel int    `json:"skill_level"`
+}
+
+// FactionOf devolve a fação ("faction1"/"faction2") em que playerID jogou.
+func (m MatchSummary) FactionOf(playerID string) (string, bool) {
+	for faction, team := range m.Teams {
+		for _, p := range team.Players {
+			if p.PlayerID == playerID {
+				return faction, true
+			}
+		}
+	}
+	return "", false
+}
+
+// Won diz se playerID ganhou; ok = false se não jogou ou não há vencedor.
+func (m MatchSummary) Won(playerID string) (won, ok bool) {
+	faction, found := m.FactionOf(playerID)
+	if !found || m.Results.Winner == "" {
+		return false, false
+	}
+	return faction == m.Results.Winner, true
+}
+
+// Teammates devolve os colegas de equipa de playerID (sem ele próprio).
+func (m MatchSummary) Teammates(playerID string) []HistoryPlayer {
+	faction, ok := m.FactionOf(playerID)
+	if !ok {
+		return nil
+	}
+	var out []HistoryPlayer
+	for _, p := range m.Teams[faction].Players {
+		if p.PlayerID != playerID {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// Opponents devolve os jogadores da fação adversária de playerID.
+func (m MatchSummary) Opponents(playerID string) []HistoryPlayer {
+	faction, ok := m.FactionOf(playerID)
+	if !ok {
+		return nil
+	}
+	var out []HistoryPlayer
+	for f, team := range m.Teams {
+		if f != faction {
+			out = append(out, team.Players...)
+		}
+	}
+	return out
 }
 
 // MatchResult é o resultado de uma partida do histórico.
@@ -134,4 +206,34 @@ func (s *StatValues) UnmarshalJSON(data []byte) error {
 	}
 	*s = out
 	return nil
+}
+
+// PlayerMatchStatsList é uma página de estatísticas do jogador por partida
+// (GET /players/{player_id}/games/{game_id}/stats).
+type PlayerMatchStatsList struct {
+	Items []PlayerMatchStats `json:"items"`
+	Start int                `json:"start"`
+	End   int                `json:"end"`
+}
+
+// PlayerMatchStats são as estatísticas de um jogador num mapa de uma partida.
+// Numa partida com vários mapas (BO3) há um item por mapa ("Match Round").
+//
+// As chaves são as da FACEIT: "Match Id", "Map", "Score", "Result" ("1"/"0"),
+// "Kills", "Deaths", "Assists", "Headshots", "Headshots %", "K/D Ratio",
+// "ADR", "MVPs", "Damage", "Match Finished At" (ms desde a epoch), ...
+type PlayerMatchStats struct {
+	Stats StatValues `json:"stats"`
+}
+
+// MatchID devolve o ID da partida.
+func (s PlayerMatchStats) MatchID() string { return s.Stats["Match Id"] }
+
+// FinishedAt devolve o fim da partida; ok = false se o valor faltar ou for inválido.
+func (s PlayerMatchStats) FinishedAt() (t time.Time, ok bool) {
+	ms, err := strconv.ParseInt(s.Stats["Match Finished At"], 10, 64)
+	if err != nil || ms <= 0 {
+		return time.Time{}, false
+	}
+	return time.UnixMilli(ms).UTC(), true
 }

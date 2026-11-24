@@ -87,6 +87,8 @@ func TestNew(t *testing.T) {
 		{name: "sem esquema", opts: Options{BaseURL: "open.faceit.com", APIKey: "k", Timeout: time.Second}, wantErr: true},
 		{name: "esquema inválido", opts: Options{BaseURL: "ftp://x.test", APIKey: "k", Timeout: time.Second}, wantErr: true},
 		{name: "timeout zero", opts: Options{BaseURL: "https://x.test", APIKey: "k"}, wantErr: true},
+		{name: "com rate limit", opts: Options{BaseURL: "https://x.test", APIKey: "k", Timeout: time.Second, RateLimit: 10}},
+		{name: "rate limit negativo", opts: Options{BaseURL: "https://x.test", APIKey: "k", Timeout: time.Second, RateLimit: -1}, wantErr: true},
 	}
 
 	for _, tt := range tests {
@@ -324,6 +326,7 @@ func TestErrors(t *testing.T) {
 		name           string
 		status         int
 		retryAfter     string
+		rateLimitReset string
 		body           string
 		want           error
 		wantRetryAfter time.Duration
@@ -332,7 +335,10 @@ func TestErrors(t *testing.T) {
 		{name: "401", status: http.StatusUnauthorized, want: ErrUnauthorized},
 		{name: "403", status: http.StatusForbidden, want: ErrUnauthorized},
 		{name: "429 com Retry-After", status: http.StatusTooManyRequests, retryAfter: "30", want: ErrRateLimited, wantRetryAfter: 30 * time.Second},
-		{name: "429 sem Retry-After", status: http.StatusTooManyRequests, want: ErrRateLimited},
+		{name: "429 só com RateLimit-Reset", status: http.StatusTooManyRequests, rateLimitReset: "3", want: ErrRateLimited, wantRetryAfter: 3 * time.Second},
+		{name: "429 com RateLimit-Reset 0", status: http.StatusTooManyRequests, rateLimitReset: "0", want: ErrRateLimited, wantRetryAfter: time.Second},
+		{name: "429 sem headers usa a janela de 1s", status: http.StatusTooManyRequests, want: ErrRateLimited, wantRetryAfter: time.Second},
+		{name: "404 ignora RateLimit-Reset", status: http.StatusNotFound, rateLimitReset: "3", want: ErrNotFound},
 		{name: "500", status: http.StatusInternalServerError, want: ErrUnavailable},
 		{name: "503", status: http.StatusServiceUnavailable, retryAfter: "5", want: ErrUnavailable, wantRetryAfter: 5 * time.Second},
 	}
@@ -342,6 +348,9 @@ func TestErrors(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				if tt.retryAfter != "" {
 					w.Header().Set("Retry-After", tt.retryAfter)
+				}
+				if tt.rateLimitReset != "" {
+					w.Header().Set("RateLimit-Reset", tt.rateLimitReset)
 				}
 				w.WriteHeader(tt.status)
 				_, _ = w.Write([]byte(`{"errors":[{"message":"x"}]}`))
@@ -417,5 +426,54 @@ func TestParseRetryAfter(t *testing.T) {
 				t.Errorf("parseRetryAfter(%q) = %s, esperava %s", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRateLimit(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"player_id":"p1"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	// 20 req/s = um pedido a cada 50ms (burst 1): 5 pedidos levam pelo menos
+	// 4 intervalos. Só se verifica o mínimo, para o teste não ser instável.
+	c, err := New(Options{BaseURL: srv.URL, APIKey: testKey, Timeout: time.Second, RateLimit: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	for range 5 {
+		if _, err := c.GetPlayer(t.Context(), "p1"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if elapsed := time.Since(start); elapsed < 4*50*time.Millisecond-10*time.Millisecond {
+		t.Errorf("5 pedidos em %s: o rate limit não foi aplicado", elapsed)
+	}
+}
+
+func TestRateLimitRespectsContext(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"player_id":"p1"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	// 1 req/s: o primeiro pedido gasta a vaga; o segundo teria de esperar ~1s,
+	// mais do que o prazo do contexto, por isso falha sem chegar ao servidor.
+	c, err := New(Options{BaseURL: srv.URL, APIKey: testKey, Timeout: time.Second, RateLimit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.GetPlayer(t.Context(), "p1"); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	if _, err := c.GetPlayer(ctx, "p1"); err == nil || !strings.Contains(err.Error(), "rate limit") {
+		t.Fatalf("erro = %v, esperava falha à espera do rate limit", err)
+	}
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Errorf("esperou %s; devia desistir dentro do prazo do contexto", elapsed)
 	}
 }

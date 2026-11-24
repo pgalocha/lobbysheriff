@@ -14,7 +14,7 @@ func setRequired(t *testing.T) {
 
 func TestLoadDefaults(t *testing.T) {
 	setRequired(t)
-	for _, k := range []string{"APP_ENV", "GO_STATS_API_PORT", "MYSQL_HOST", "MYSQL_PORT", "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "CORS_ALLOWED_ORIGINS", "FACEIT_API_KEY", "FACEIT_API_BASE_URL", "FACEIT_HTTP_TIMEOUT"} {
+	for _, k := range []string{"APP_ENV", "GO_STATS_API_PORT", "MYSQL_HOST", "MYSQL_PORT", "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "CORS_ALLOWED_ORIGINS", "FACEIT_API_KEY", "FACEIT_API_BASE_URL", "FACEIT_HTTP_TIMEOUT", "FACEIT_RATE_LIMIT", "FACEIT_MAX_RETRIES"} {
 		t.Setenv(k, "")
 	}
 
@@ -34,8 +34,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.CORSAllowedOrigins != nil {
 		t.Errorf("CORSAllowedOrigins = %v, esperava vazio", cfg.CORSAllowedOrigins)
 	}
-	if cfg.FACEIT.BaseURL != "https://open.faceit.com/data/v4" || cfg.FACEIT.Timeout != 10*time.Second {
-		t.Errorf("FACEIT = %q (timeout %s), esperava a URL pública e 10s", cfg.FACEIT.BaseURL, cfg.FACEIT.Timeout)
+	if cfg.FACEIT.BaseURL != "https://open.faceit.com/data/v4" || cfg.FACEIT.Timeout != 10*time.Second || cfg.FACEIT.RateLimit != 10 || cfg.FACEIT.MaxRetries != 3 {
+		t.Errorf("FACEIT = %+v, esperava a URL pública, 10s, 10 req/s e 3 retries", cfg.FACEIT)
 	}
 }
 
@@ -103,6 +103,11 @@ func TestLoadErrors(t *testing.T) {
 		{name: "password do MySQL em falta", env: map[string]string{"STATS_DB_PASSWORD": ""}},
 		{name: "timeout da FACEIT inválido", env: map[string]string{"FACEIT_HTTP_TIMEOUT": "dez"}},
 		{name: "timeout da FACEIT não positivo", env: map[string]string{"FACEIT_HTTP_TIMEOUT": "0s"}},
+		{name: "rate limit não numérico", env: map[string]string{"FACEIT_RATE_LIMIT": "muito"}},
+		{name: "rate limit acima do da FACEIT", env: map[string]string{"FACEIT_RATE_LIMIT": "21"}},
+		{name: "rate limit zero", env: map[string]string{"FACEIT_RATE_LIMIT": "0"}},
+		{name: "retries negativos", env: map[string]string{"FACEIT_MAX_RETRIES": "-1"}},
+		{name: "retries a mais", env: map[string]string{"FACEIT_MAX_RETRIES": "11"}},
 	}
 
 	for _, tt := range tests {

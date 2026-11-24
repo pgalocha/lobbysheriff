@@ -8,6 +8,8 @@
 //	go-stats-api migrate up         aplica as migrations pendentes
 //	go-stats-api migrate down [N]   reverte as últimas N migrations (por omissão 1)
 //	go-stats-api migrate version    mostra a versão atual do schema
+//	go-stats-api faceit player <nickname>      perfil e estatísticas CS2 (diagnóstico,
+//	go-stats-api faceit last-match <nickname>  usa a FACEIT real; JSON no stdout)
 package main
 
 import (
@@ -27,7 +29,6 @@ import (
 
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/config"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/database"
-	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/faceit"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/health"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/server"
 )
@@ -63,6 +64,14 @@ func main() {
 	case "migrate":
 		if err := runMigrate(cfg.MySQL, os.Args[2:], logger); err != nil {
 			logger.Error("migrate falhou", "error", err)
+			os.Exit(1)
+		}
+	case "faceit":
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		err := runFACEIT(ctx, cfg.FACEIT, os.Args[2:], os.Stdout)
+		stop()
+		if err != nil {
+			logger.Error("faceit falhou", "error", err)
 			os.Exit(1)
 		}
 	default:
@@ -116,16 +125,9 @@ func runMigrate(cfg config.MySQL, args []string, logger *slog.Logger) error {
 
 func run(cfg config.Config, logger *slog.Logger) error {
 	// A key da FACEIT só é exigida aqui: migrate e healthcheck não a usam.
-	if err := cfg.FACEIT.Validate(); err != nil {
-		return err
-	}
-	faceitClient, err := faceit.New(faceit.Options{
-		BaseURL: cfg.FACEIT.BaseURL,
-		APIKey:  cfg.FACEIT.APIKey,
-		Timeout: cfg.FACEIT.Timeout,
-	})
+	faceitClient, err := newFACEITClient(cfg.FACEIT)
 	if err != nil {
-		return fmt.Errorf("cliente FACEIT: %w", err)
+		return err
 	}
 	// Ainda sem consumidores: o worker de sincronização (internal/sync) vai recebê-lo.
 	_ = faceitClient

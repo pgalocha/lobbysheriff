@@ -44,6 +44,9 @@ type Options struct {
 	// RateLimit: máximo de pedidos por segundo feitos por este Client. Os
 	// pedidos acima do ritmo esperam (respeitando o ctx). Zero = sem limite.
 	RateLimit int
+	// Retry: novas tentativas com backoff exponencial em 429, 5xx e erros de
+	// rede. Zero = sem novas tentativas; DefaultRetryPolicy para produção.
+	Retry RetryPolicy
 }
 
 // Client chama a FACEIT Data API v4. É seguro para uso concorrente.
@@ -52,6 +55,9 @@ type Client struct {
 	apiKey  string
 	http    *http.Client
 	limiter *rate.Limiter // nil = sem limite
+	retry   RetryPolicy
+	// wait espera entre tentativas; substituível nos testes.
+	wait func(ctx context.Context, d time.Duration) error
 }
 
 // New valida as opções e cria o Client.
@@ -78,7 +84,10 @@ func New(opts Options) (*Client, error) {
 	if opts.RateLimit < 0 {
 		return nil, errors.New("faceit: rate limit não pode ser negativo")
 	}
-	c := &Client{baseURL: u, apiKey: opts.APIKey, http: hc}
+	if err := opts.Retry.validate(); err != nil {
+		return nil, err
+	}
+	c := &Client{baseURL: u, apiKey: opts.APIKey, http: hc, retry: opts.Retry, wait: sleep}
 	if opts.RateLimit > 0 {
 		// Burst 1: pedidos espaçados de forma uniforme, sem rajadas.
 		c.limiter = rate.NewLimiter(rate.Limit(opts.RateLimit), 1)
@@ -86,8 +95,9 @@ func New(opts Options) (*Client, error) {
 	return c, nil
 }
 
-// get faz GET a path (já com os segmentos escapados) e descodifica o JSON em out.
-func (c *Client) get(ctx context.Context, path string, query url.Values, out any) error {
+// do faz uma tentativa de GET a path (já com os segmentos escapados) e
+// descodifica o JSON em out. As novas tentativas ficam a cargo de get (retry.go).
+func (c *Client) do(ctx context.Context, path string, query url.Values, out any) error {
 	// Concatenação de strings (e não u.Path): os segmentos já vêm escapados
 	// e não podem ser escapados duas vezes nem normalizados ("../").
 	target := c.baseURL.String() + path
@@ -112,7 +122,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 	resp, err := c.http.Do(req)
 	if err != nil {
 		// O erro do net/http inclui o URL, que não tem a key (vai no header).
-		return fmt.Errorf("faceit: GET %s: %w", path, err)
+		return fmt.Errorf("faceit: GET %s: %w", path, &transportError{err: err})
 	}
 	defer func() { _ = resp.Body.Close() }()
 
