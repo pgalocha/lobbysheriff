@@ -85,7 +85,7 @@ services:
   # http://localhost:8090 — o "Try it out" chama a API em localhost:8080
   # (precisa de CORS_ALLOWED_ORIGINS=http://localhost:8090 no .env).
   swagger-ui:
-    image: swaggerapi/swagger-ui:v5.34.1
+    image: swaggerapi/swagger-ui:v5.35.1
     restart: unless-stopped
     environment:
       URLS: '[{"url": "contracts/go-stats-api.yaml", "name": "go-stats-api"}]'
