@@ -51,7 +51,8 @@ type HistoryOptions struct {
 	Game string
 	// From/To limitam o intervalo de datas; zero = sem limite.
 	From, To time.Time
-	// Offset e Limit paginam (a FACEIT aceita no máximo 100 por página).
+	// Offset (máx. 1000) e Limit (máx. 100; zero = 20, o valor por omissão da
+	// FACEIT) paginam.
 	Offset, Limit int
 }
 
@@ -64,8 +65,8 @@ func (c *Client) GetPlayerHistory(ctx context.Context, playerID string, opts His
 	if opts.Game == "" {
 		return MatchHistory{}, errors.New("faceit: game vazio")
 	}
-	if opts.Offset < 0 || opts.Limit < 0 || opts.Limit > 100 {
-		return MatchHistory{}, errors.New("faceit: paginação inválida (offset >= 0, 0 <= limit <= 100)")
+	if opts.Offset < 0 || opts.Offset > 1000 || opts.Limit < 0 || opts.Limit > 100 {
+		return MatchHistory{}, errors.New("faceit: paginação inválida (0 <= offset <= 1000, 0 <= limit <= 100)")
 	}
 
 	q := url.Values{"game": {opts.Game}}

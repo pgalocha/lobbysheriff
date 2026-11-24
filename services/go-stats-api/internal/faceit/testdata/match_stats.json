@@ -12,7 +12,7 @@
             {
               "player_id": "00000000-0000-0000-0000-000000000001",
               "nickname": "sheriff",
-              "player_stats": {"Kills": "24", "Deaths": "15", "Assists": "4", "K/D Ratio": "1.6", "Headshots %": "50", "MVPs": "5"}
+              "player_stats": {"Kills": "24", "Deaths": 15, "Assists": "4", "K/D Ratio": 1.6, "Headshots %": "50", "MVPs": "5", "Result": true, "ADR": null}
             }
           ]
         }

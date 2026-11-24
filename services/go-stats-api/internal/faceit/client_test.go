@@ -188,6 +188,9 @@ func TestGetPlayerHistory(t *testing.T) {
 			if len(h.Items) != 1 || h.Items[0].Status != "FINISHED" || h.Items[0].FinishedAt != 1764002400 {
 				t.Errorf("history = %+v", h)
 			}
+			if r := h.Items[0].Results; r.Winner != "faction1" || r.Score["faction1"] != 1 {
+				t.Errorf("results = %+v", r)
+			}
 			q := reqs.all()[0].URL.Query()
 			for k, want := range tt.wantQuery {
 				if got := q.Get(k); got != want {
@@ -211,8 +214,53 @@ func TestGetMatchStats(t *testing.T) {
 		t.Fatalf("rounds = %+v", s.Rounds)
 	}
 	pl := s.Rounds[0].Teams[0].Players[0]
-	if pl.Nickname != "sheriff" || pl.PlayerStats["Kills"] != "24" {
+	if pl.Nickname != "sheriff" {
 		t.Errorf("player = %+v", pl)
+	}
+	// O fixture mistura strings, números, booleanos e null (o contrato da
+	// FACEIT não fixa o tipo); tudo fica normalizado para string.
+	want := map[string]string{"Kills": "24", "Deaths": "15", "K/D Ratio": "1.6", "Result": "true"}
+	for k, v := range want {
+		if got := pl.PlayerStats[k]; got != v {
+			t.Errorf("PlayerStats[%q] = %q, esperava %q", k, got, v)
+		}
+	}
+	if _, ok := pl.PlayerStats["ADR"]; ok {
+		t.Error("valores null devem ser ignorados")
+	}
+}
+
+func TestStatValuesUnmarshal(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		want    StatValues
+		wantErr bool
+	}{
+		{name: "strings", in: `{"Map":"de_mirage"}`, want: StatValues{"Map": "de_mirage"}},
+		{name: "escapes JSON", in: `{"Team":"a\u00e7\"b"}`, want: StatValues{"Team": "aç\"b"}},
+		{name: "número e booleano", in: `{"Kills":24,"Win":false}`, want: StatValues{"Kills": "24", "Win": "false"}},
+		{name: "objeto fica em JSON", in: `{"x":{"a":1}}`, want: StatValues{"x": `{"a":1}`}},
+		{name: "null no topo", in: `null`, want: nil},
+		{name: "não é objeto", in: `[1,2]`, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got StatValues
+			err := got.UnmarshalJSON([]byte(tt.in))
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("erro = %v, wantErr %v", err, tt.wantErr)
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("got %q, esperava %q", got, tt.want)
+			}
+			for k, v := range tt.want {
+				if got[k] != v {
+					t.Errorf("[%q] = %q, esperava %q", k, got[k], v)
+				}
+			}
+		})
 	}
 }
 
@@ -228,6 +276,10 @@ func TestInvalidArguments(t *testing.T) {
 		{name: "game_id vazio", call: func(ctx context.Context) error { _, err := c.GetPlayerStats(ctx, "p1", ""); return err }},
 		{name: "history sem jogo", call: func(ctx context.Context) error {
 			_, err := c.GetPlayerHistory(ctx, "p1", HistoryOptions{})
+			return err
+		}},
+		{name: "history offset > 1000", call: func(ctx context.Context) error {
+			_, err := c.GetPlayerHistory(ctx, "p1", HistoryOptions{Game: GameCS2, Offset: 1001})
 			return err
 		}},
 		{name: "history limit > 100", call: func(ctx context.Context) error {

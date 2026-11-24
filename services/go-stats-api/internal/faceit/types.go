@@ -1,5 +1,10 @@
 package faceit
 
+import (
+	"bytes"
+	"encoding/json"
+)
+
 // Player é um jogador FACEIT (GET /players e /players/{player_id}).
 type Player struct {
 	PlayerID  string                `json:"player_id"`
@@ -55,6 +60,14 @@ type MatchSummary struct {
 	StartedAt       int64  `json:"started_at"`
 	FinishedAt      int64  `json:"finished_at"`
 	FaceitURL       string `json:"faceit_url"`
+	// Results: vencedor ("faction1"/"faction2") e resultado por fação.
+	Results MatchResult `json:"results"`
+}
+
+// MatchResult é o resultado de uma partida do histórico.
+type MatchResult struct {
+	Winner string           `json:"winner"`
+	Score  map[string]int64 `json:"score"`
 }
 
 // MatchStats são as estatísticas de uma partida (GET /matches/{match_id}/stats).
@@ -64,23 +77,61 @@ type MatchStats struct {
 }
 
 // MatchRound é um mapa jogado. As chaves de RoundStats/TeamStats/PlayerStats
-// são as da FACEIT ("Map", "Score", "Kills", "K/D Ratio", ...), valores em string.
+// são as da FACEIT ("Map", "Score", "Kills", "K/D Ratio", ...).
 type MatchRound struct {
-	MatchID    string            `json:"match_id"`
-	RoundStats map[string]string `json:"round_stats"`
-	Teams      []MatchTeam       `json:"teams"`
+	MatchID    string      `json:"match_id"`
+	RoundStats StatValues  `json:"round_stats"`
+	Teams      []MatchTeam `json:"teams"`
 }
 
 // MatchTeam é uma equipa num mapa.
 type MatchTeam struct {
-	TeamID    string            `json:"team_id"`
-	TeamStats map[string]string `json:"team_stats"`
-	Players   []MatchPlayer     `json:"players"`
+	TeamID    string        `json:"team_id"`
+	TeamStats StatValues    `json:"team_stats"`
+	Players   []MatchPlayer `json:"players"`
 }
 
 // MatchPlayer são as estatísticas de um jogador num mapa.
 type MatchPlayer struct {
-	PlayerID    string            `json:"player_id"`
-	Nickname    string            `json:"nickname"`
-	PlayerStats map[string]string `json:"player_stats"`
+	PlayerID    string     `json:"player_id"`
+	Nickname    string     `json:"nickname"`
+	PlayerStats StatValues `json:"player_stats"`
+}
+
+// StatValues são estatísticas chave → valor, normalizadas para string.
+//
+// O contrato da FACEIT não fixa o tipo dos valores (additionalProperties: {});
+// na prática vêm como strings ("24", "1.6"), mas um número ou booleano não
+// deve fazer falhar a descodificação da partida inteira. Números e booleanos
+// ficam no seu texto JSON; null é ignorado; objetos e arrays ficam em JSON.
+type StatValues map[string]string
+
+// UnmarshalJSON implementa a normalização descrita em StatValues.
+func (s *StatValues) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if raw == nil {
+		*s = nil
+		return nil
+	}
+	out := make(StatValues, len(raw))
+	for k, v := range raw {
+		v = bytes.TrimSpace(v)
+		switch {
+		case bytes.Equal(v, []byte("null")):
+			continue
+		case len(v) > 0 && v[0] == '"':
+			var str string
+			if err := json.Unmarshal(v, &str); err != nil {
+				return err
+			}
+			out[k] = str
+		default:
+			out[k] = string(v)
+		}
+	}
+	*s = out
+	return nil
 }
