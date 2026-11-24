@@ -50,4 +50,5 @@ description: O que faz e QUANDO usar. É isto que o agente lê para decidir
 
 | Skill | Descrição |
 |---|---|
-| _(nenhuma ainda)_ | |
+| [`regras-desenvolvimento`](regras-desenvolvimento/) | Regras obrigatórias para agentes: Git decidido pelo utilizador, nada instalado no host, secrets, contratos, migrations, Go, CI. |
+| [`caveman`](caveman/) | Respostas concisas para gastar menos tokens de saída; ativa com `/caveman`. Cópia da skill de [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (Apache-2.0). |
