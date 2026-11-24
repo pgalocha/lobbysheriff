@@ -45,10 +45,12 @@ Vue.js ──► Nginx Gateway ──► go-stats-api ──► FACEIT Data API 
 lobbysheriff/
 ├── .devcontainer/         # Ambiente de desenvolvimento (Dev Container)
 ├── .github/workflows/     # CI por serviço
-├── contracts/openapi/     # Contratos HTTP (OpenAPI)
+├── contracts/openapi/     # Contratos HTTP (OpenAPI) — fonte de verdade das APIs
 ├── gateway/               # Configuração Nginx
 ├── infra/                 # Infraestrutura local (init do MySQL, …)
 ├── observability/         # Prometheus e Grafana
+├── postman/               # Coleções Postman geradas a partir dos contratos
+├── scripts/               # Tarefas do repositório (contratos, …)
 ├── services/
 │   ├── go-stats-api/      # Microsserviço Go + Fiber
 │   └── php-players-api/   # Microsserviço PHP
@@ -83,8 +85,19 @@ editor:
 
 ```bash
 docker compose up -d --build
-curl localhost:8080/livez
+curl localhost:8080/health
 ```
+
+| URL | O quê |
+|---|---|
+| http://localhost:8080/health | `go-stats-api`: estado das dependências |
+| http://localhost:8090 | Swagger UI com os contratos das APIs |
+
+### Contratos de API
+
+As APIs são *contract-first*: o contrato OpenAPI em `contracts/openapi/` é escrito primeiro e
+o código, a validação, o Swagger e o Postman derivam dele. Ver
+[contracts/README.md](contracts/README.md).
 
 > ⚠️ A `FACEIT_API_KEY` é usada apenas no backend e nunca deve ser exposta ao frontend nem commitada.
 

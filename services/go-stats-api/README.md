@@ -4,6 +4,9 @@ Sincronização com a FACEIT, snapshots, partidas, rankings e LobbySheriff da Se
 
 ## Rotas
 
+Definidas no contrato [`contracts/openapi/go-stats-api.yaml`](../../contracts/openapi/go-stats-api.yaml)
+(ver [contracts/README.md](../../contracts/README.md)). Documentação interativa em http://localhost:8090.
+
 | Rota | Descrição |
 |---|---|
 | `GET /livez` | Liveness: o processo está vivo (não verifica dependências) |
@@ -15,6 +18,7 @@ Sincronização com a FACEIT, snapshots, partidas, rankings e LobbySheriff da Se
 ```bash
 cd services/go-stats-api
 go run ./cmd/server                # arranca a API em :8080
+go generate ./...                  # regenera internal/api a partir do contrato
 go test ./...
 golangci-lint run ./...
 ```

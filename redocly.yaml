@@ -1,0 +1,8 @@
+# Configuração do Redocly CLI (lint dos contratos em contracts/openapi/).
+# Exceções pontuais ficam em .redocly.lint-ignore.yaml, com o motivo.
+extends:
+  - recommended
+
+rules:
+  # O servidor localhost é intencional: é o que o Swagger UI local chama.
+  no-server-example.com: off

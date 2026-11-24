@@ -11,7 +11,7 @@ func setRequired(t *testing.T) {
 
 func TestLoadDefaults(t *testing.T) {
 	setRequired(t)
-	for _, k := range []string{"APP_ENV", "GO_STATS_API_PORT", "MYSQL_HOST", "MYSQL_PORT", "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD"} {
+	for _, k := range []string{"APP_ENV", "GO_STATS_API_PORT", "MYSQL_HOST", "MYSQL_PORT", "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "CORS_ALLOWED_ORIGINS"} {
 		t.Setenv(k, "")
 	}
 
@@ -27,6 +27,23 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if got := cfg.Redis.Addr(); got != "redis:6379" {
 		t.Errorf("Redis.Addr() = %q, esperava redis:6379", got)
+	}
+	if cfg.CORSAllowedOrigins != nil {
+		t.Errorf("CORSAllowedOrigins = %v, esperava vazio", cfg.CORSAllowedOrigins)
+	}
+}
+
+func TestLoadCORSOrigins(t *testing.T) {
+	setRequired(t)
+	t.Setenv("CORS_ALLOWED_ORIGINS", " http://localhost:8090 ,, http://localhost:5173")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	want := []string{"http://localhost:8090", "http://localhost:5173"}
+	if len(cfg.CORSAllowedOrigins) != 2 || cfg.CORSAllowedOrigins[0] != want[0] || cfg.CORSAllowedOrigins[1] != want[1] {
+		t.Errorf("CORSAllowedOrigins = %q, esperava %q", cfg.CORSAllowedOrigins, want)
 	}
 }
 

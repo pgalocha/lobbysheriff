@@ -1,0 +1,63 @@
+name: contracts
+
+# Verificações dos contratos OpenAPI (contracts/openapi/) e das coleções Postman.
+# Corre em todos os PRs (sem filtro `paths`) para poder ser check obrigatório;
+# são jobs rápidos.
+on:
+  pull_request:
+    branches: [master, staging]
+  push:
+    branches: [master, staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint dos contratos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container: node:26-bookworm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: scripts/contracts.sh lint
+
+  postman:
+    name: Coleções Postman atualizadas
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container: node:26-bookworm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          scripts/contracts.sh check-postman
+
+  breaking:
+    name: Breaking changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container: golang:1.27-bookworm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # precisa do histórico para ler o contrato no branch de destino
+          persist-credentials: false
+      - env:
+          # PR: o branch de destino. Push: o commit anterior do branch.
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          if [ -z "$BASE_SHA" ] || [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            echo "Sem commit base: nada a comparar."
+            exit 0
+          fi
+          scripts/contracts.sh breaking "$BASE_SHA"
