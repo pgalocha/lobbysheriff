@@ -1,0 +1,28 @@
+{
+  "player_id": "00000000-0000-0000-0000-000000000001",
+  "game_id": "cs2",
+  "lifetime": {
+    "Recent Results": ["1", "0", "1", "1", "0"],
+    "Matches": "412",
+    "Wins": "218",
+    "Win Rate %": "53",
+    "Average K/D Ratio": "1.12",
+    "K/D Ratio": "461.44",
+    "Average Headshots %": "48",
+    "Total Headshots %": "19776",
+    "ADR": "79.3",
+    "Total Matches": "120",
+    "Longest Win Streak": "7",
+    "Current Win Streak": "1"
+  },
+  "segments": [
+    {
+      "label": "Mirage",
+      "img_small": "https://example.test/mirage-small.jpg",
+      "img_regular": "https://example.test/mirage.jpg",
+      "stats": {"Matches": "80", "Wins": "45", "Win Rate %": "56", "Average K/D Ratio": "1.2", "ADR": "81.1"},
+      "type": "Map",
+      "mode": "5v5"
+    }
+  ]
+}

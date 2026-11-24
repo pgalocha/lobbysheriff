@@ -1,0 +1,82 @@
+{
+  "items": [
+    {
+      "match_id": "1-00000000-0000-0000-0000-00000000000a",
+      "game_id": "cs2",
+      "region": "EU",
+      "match_type": "",
+      "game_mode": "5v5",
+      "max_players": 10,
+      "teams_size": 5,
+      "teams": {
+        "faction1": {
+          "team_id": "00000000-0000-0000-0000-000000000001",
+          "nickname": "team_sheriff",
+          "avatar": "https://example.test/avatar.jpg",
+          "type": "",
+          "players": [
+            {
+              "player_id": "00000000-0000-0000-0000-000000000001",
+              "nickname": "sheriff",
+              "avatar": "https://example.test/avatar.jpg",
+              "skill_level": 8,
+              "game_player_id": "76561190000000001",
+              "game_player_name": "sheriff",
+              "faceit_url": "https://www.faceit.com/{lang}/players/sheriff"
+            },
+            {
+              "player_id": "00000000-0000-0000-0000-000000000002",
+              "nickname": "deputy",
+              "avatar": "https://example.test/deputy.jpg",
+              "skill_level": 7,
+              "game_player_id": "76561190000000002",
+              "game_player_name": "deputy",
+              "faceit_url": "https://www.faceit.com/{lang}/players/deputy"
+            }
+          ]
+        },
+        "faction2": {
+          "team_id": "00000000-0000-0000-0000-000000000009",
+          "nickname": "team_rival",
+          "avatar": "https://example.test/rival.jpg",
+          "type": "",
+          "players": [
+            {
+              "player_id": "00000000-0000-0000-0000-000000000009",
+              "nickname": "outlaw",
+              "avatar": "https://example.test/outlaw.jpg",
+              "skill_level": 9,
+              "game_player_id": "76561190000000009",
+              "game_player_name": "outlaw",
+              "faceit_url": "https://www.faceit.com/{lang}/players/outlaw"
+            }
+          ]
+        }
+      },
+      "playing_players": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000009"
+      ],
+      "competition_id": "00000000-0000-0000-0000-0000000000c1",
+      "competition_name": "Europe 5v5 Queue",
+      "competition_type": "matchmaking",
+      "organizer_id": "faceit",
+      "status": "finished",
+      "started_at": 1764000000,
+      "finished_at": 1764002400,
+      "results": {
+        "winner": "faction1",
+        "score": {
+          "faction1": 13,
+          "faction2": 9
+        }
+      },
+      "faceit_url": "https://www.faceit.com/{lang}/cs2/room/1-00000000-0000-0000-0000-00000000000a"
+    }
+  ],
+  "start": 0,
+  "end": 1,
+  "from": 0,
+  "to": 1765000000
+}

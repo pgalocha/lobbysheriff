@@ -1,0 +1,69 @@
+{
+  "items": [
+    {
+      "stats": {
+        "Match Id": "1-00000000-0000-0000-0000-00000000000a",
+        "Match Round": "1",
+        "Best Of": "1",
+        "Competition Id": "00000000-0000-0000-0000-0000000000c1",
+        "Game": "cs2",
+        "Game Mode": "5v5",
+        "Region": "EU",
+        "Map": "de_mirage",
+        "Score": "13 / 9",
+        "Rounds": "22",
+        "Team": "team_sheriff",
+        "Winner": "00000000-0000-0000-0000-000000000001",
+        "Final Score": "13",
+        "First Half Score": "7",
+        "Second Half Score": "6",
+        "Overtime score": "0",
+        "Player Id": "00000000-0000-0000-0000-000000000001",
+        "Nickname": "sheriff",
+        "Result": "1",
+        "Kills": "24",
+        "Deaths": "15",
+        "Assists": "4",
+        "Headshots": "12",
+        "Headshots %": "50",
+        "K/D Ratio": "1.6",
+        "K/R Ratio": "1.09",
+        "ADR": "96.4",
+        "Damage": "2121",
+        "MVPs": "5",
+        "Double Kills": "3",
+        "Triple Kills": "1",
+        "Quadro Kills": "0",
+        "Penta Kills": "0",
+        "Match Finished At": 1764002400000,
+        "Created At": "2025-11-24T16:00:00.000Z",
+        "Updated At": "2025-11-24T16:01:30.000Z"
+      }
+    },
+    {
+      "stats": {
+        "Match Id": "1-00000000-0000-0000-0000-00000000000b",
+        "Match Round": "1",
+        "Best Of": "1",
+        "Game": "cs2",
+        "Game Mode": "5v5",
+        "Map": "de_anubis",
+        "Score": "8 / 13",
+        "Player Id": "00000000-0000-0000-0000-000000000001",
+        "Nickname": "sheriff",
+        "Result": "0",
+        "Kills": "11",
+        "Deaths": "17",
+        "Assists": "6",
+        "Headshots": "4",
+        "Headshots %": "36",
+        "K/D Ratio": "0.65",
+        "ADR": "64.2",
+        "MVPs": "1",
+        "Match Finished At": 1763990000000
+      }
+    }
+  ],
+  "start": 0,
+  "end": 2
+}

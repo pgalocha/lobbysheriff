@@ -8,6 +8,8 @@
 //	go-stats-api migrate up         aplica as migrations pendentes
 //	go-stats-api migrate down [N]   reverte as últimas N migrations (por omissão 1)
 //	go-stats-api migrate version    mostra a versão atual do schema
+//	go-stats-api faceit player <nickname>      perfil e estatísticas CS2 (diagnóstico,
+//	go-stats-api faceit last-match <nickname>  usa a FACEIT real; JSON no stdout)
 package main
 
 import (
@@ -64,6 +66,14 @@ func main() {
 			logger.Error("migrate falhou", "error", err)
 			os.Exit(1)
 		}
+	case "faceit":
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		err := runFACEIT(ctx, cfg.FACEIT, os.Args[2:], os.Stdout)
+		stop()
+		if err != nil {
+			logger.Error("faceit falhou", "error", err)
+			os.Exit(1)
+		}
 	default:
 		logger.Error("comando desconhecido", "command", cmd)
 		os.Exit(2)
@@ -114,6 +124,14 @@ func runMigrate(cfg config.MySQL, args []string, logger *slog.Logger) error {
 }
 
 func run(cfg config.Config, logger *slog.Logger) error {
+	// A key da FACEIT só é exigida aqui: migrate e healthcheck não a usam.
+	faceitClient, err := newFACEITClient(cfg.FACEIT)
+	if err != nil {
+		return err
+	}
+	// Ainda sem consumidores: o worker de sincronização (internal/sync) vai recebê-lo.
+	_ = faceitClient
+
 	// sql.Open e redis.NewClient não abrem ligações: a app arranca mesmo com
 	// o MySQL/Redis em baixo, e o /readyz reporta-o até ficarem disponíveis.
 	db, err := database.Open(cfg.MySQL)

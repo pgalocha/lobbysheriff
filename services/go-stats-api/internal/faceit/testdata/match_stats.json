@@ -1,0 +1,39 @@
+{
+  "rounds": [
+    {
+      "best_of": "1",
+      "competition_id": "00000000-0000-0000-0000-0000000000c1",
+      "game_id": "cs2",
+      "game_mode": "5v5",
+      "match_id": "1-00000000-0000-0000-0000-00000000000a",
+      "match_round": "1",
+      "played": "1",
+      "round_stats": {"Map": "de_mirage", "Score": "13 / 9", "Winner": "00000000-0000-0000-0000-000000000001", "Region": "EU", "Rounds": "22"},
+      "teams": [
+        {
+          "team_id": "00000000-0000-0000-0000-000000000001",
+          "premade": false,
+          "team_stats": {"Team Win": "1", "Overtime score": "0", "First Half Score": "7", "Second Half Score": "6", "Team": "team_sheriff", "Final Score": "13", "Team Headshots": "9.4"},
+          "players": [
+            {
+              "player_id": "00000000-0000-0000-0000-000000000001",
+              "nickname": "sheriff",
+              "player_stats": {
+                "Kills": "24", "Deaths": "15", "Assists": "4", "Headshots": "12", "Headshots %": "50",
+                "K/D Ratio": "1.6", "K/R Ratio": "1.09", "ADR": "96.4", "Damage": "2121", "MVPs": "5",
+                "Result": "1", "First Kills": "4", "Entry Count": "7", "Entry Wins": "4",
+                "Double Kills": "3", "Triple Kills": "1", "Quadro Kills": "0", "Penta Kills": "0"
+              }
+            }
+          ]
+        },
+        {
+          "team_id": "00000000-0000-0000-0000-000000000009",
+          "premade": true,
+          "team_stats": {"Team Win": "0", "Overtime score": "0", "First Half Score": "5", "Second Half Score": "4", "Team": "team_rival", "Final Score": "9", "Team Headshots": "7.2"},
+          "players": []
+        }
+      ]
+    }
+  ]
+}

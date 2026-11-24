@@ -8,6 +8,7 @@ require (
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/redis/go-redis/v9 v9.24.0
+	golang.org/x/time v0.16.0
 )
 
 require (

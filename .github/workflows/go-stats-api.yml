@@ -111,6 +111,8 @@ jobs:
       - name: Arrancar a stack
         run: |
           cp .env.example .env
+          # Key falsa: a API exige-a no arranque, mas a CI nunca chama a FACEIT.
+          sed -i 's/^FACEIT_API_KEY=$/FACEIT_API_KEY=dummy-ci/' .env
           docker compose up -d --build --wait go-stats-api
 
       - name: Coleção Postman contra a API
