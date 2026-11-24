@@ -24,6 +24,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Ficar numa série LTS do MySQL. As versões YY.M (ex.: 26.7) são Innovation,
+      # com suporte só até à seguinte. Mudar de série (ex.: 8.4 → 9.7 LTS) é manual,
+      # e inclui a imagem mysql do workflow .github/workflows/go-stats-api.yml.
+      - dependency-name: mysql
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: devcontainers
     directory: /
