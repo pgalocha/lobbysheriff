@@ -8,6 +8,11 @@
   <strong>FACEIT Stats Cockpit</strong> — acompanha a evolução de grupos de amigos no CS2 através da FACEIT Data API, com rankings comparativos e a eleição semanal do <strong>LobbySheriff da Semana</strong>.
 </p>
 
+<p align="center">
+  <a href="https://github.com/pgalocha/lobbysheriff/actions/workflows/go-stats-api.yml"><img src="https://github.com/pgalocha/lobbysheriff/actions/workflows/go-stats-api.yml/badge.svg?branch=master" alt="CI go-stats-api"></a>
+  <a href="https://github.com/pgalocha/lobbysheriff/actions/workflows/contracts.yml"><img src="https://github.com/pgalocha/lobbysheriff/actions/workflows/contracts.yml/badge.svg?branch=master" alt="CI contracts"></a>
+</p>
+
 > 🚧 Projeto em desenvolvimento ativo. Fase atual: **Fase 1 — serviço de estatísticas em Go**.
 
 ---
@@ -38,6 +43,67 @@ Vue.js ──► Nginx Gateway ──► go-stats-api ──► FACEIT Data API 
                                   │
                          MySQL  ·  Redis
 ```
+
+## 🧰 Tech stack
+
+<table>
+  <tr>
+    <td><strong>Backend</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Go-1.27-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.27">
+      <img src="https://img.shields.io/badge/Fiber-v3-00ACD7?style=for-the-badge&logo=go&logoColor=white" alt="Fiber v3">
+      <img src="https://img.shields.io/badge/PHP-planeado-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP planeado">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Frontend</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Vue.js-3%20%C2%B7%20planeado-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js 3 · planeado">
+      <img src="https://img.shields.io/badge/TypeScript-planeado-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript planeado">
+      <img src="https://img.shields.io/badge/Vite-planeado-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite planeado">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Dados</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/MySQL-8.4%20LTS-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL 8.4 LTS">
+      <img src="https://img.shields.io/badge/Redis-8-FF4438?style=for-the-badge&logo=redis&logoColor=white" alt="Redis 8">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>API</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/OpenAPI-3.0-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white" alt="OpenAPI 3.0">
+      <img src="https://img.shields.io/badge/Swagger%20UI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger UI">
+      <img src="https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white" alt="Postman">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Infraestrutura</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+      <img src="https://img.shields.io/badge/Dev%20Containers-007ACC?style=for-the-badge&logo=linuxcontainers&logoColor=white" alt="Dev Containers">
+      <img src="https://img.shields.io/badge/Kubernetes-Kustomize-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes Kustomize">
+      <img src="https://img.shields.io/badge/Nginx-planeado-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx planeado">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>CI/CD</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions">
+      <img src="https://img.shields.io/badge/Dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white" alt="Dependabot">
+      <img src="https://img.shields.io/badge/golangci--lint-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="golangci-lint">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Observabilidade</strong></td>
+    <td>
+      <img src="https://img.shields.io/badge/Prometheus-planeado-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" alt="Prometheus planeado">
+      <img src="https://img.shields.io/badge/Grafana-planeado-F46800?style=for-the-badge&logo=grafana&logoColor=white" alt="Grafana planeado">
+      <img src="https://img.shields.io/badge/Sentry-planeado-362D59?style=for-the-badge&logo=sentry&logoColor=white" alt="Sentry planeado">
+    </td>
+  </tr>
+</table>
 
 ## 📁 Estrutura
 
