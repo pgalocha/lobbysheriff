@@ -38,7 +38,15 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
-          paths=("$SERVICE_DIR" .github/workflows/go-stats-api.yml .github/scripts/check-migrations.sh)
+          paths=(
+            "$SERVICE_DIR"
+            contracts/openapi/go-stats-api.yaml
+            postman/go-stats-api.postman_collection.json
+            scripts/contracts.sh
+            docker-compose.yml
+            .github/workflows/go-stats-api.yml
+            .github/scripts/check-migrations.sh
+          )
           if [ -z "$BASE_SHA" ] || [[ "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
             changed=true   # sem base fiável: corre tudo
           elif git diff --quiet "$BASE_SHA" HEAD -- "${paths[@]}"; then
@@ -71,6 +79,14 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
+      - name: Código gerado corresponde ao contrato
+        run: |
+          go generate ./...
+          git diff --exit-code -- internal/api || {
+            echo "::error::internal/api desatualizado face a contracts/openapi/go-stats-api.yaml. Corre 'go generate ./...' e faz commit."
+            exit 1
+          }
+
       - name: Formatação
         run: test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::corre gofmt -w ."; exit 1; }
 
@@ -79,6 +95,34 @@ jobs:
 
       - name: Lint
         run: golangci-lint run ./...
+
+  contract:
+    name: Contrato (Newman)
+    needs: changes
+    if: needs.changes.outputs.service == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Stack real (MySQL, Redis, migrations e API) com o docker-compose.yml do repositório.
+      - name: Arrancar a stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --build --wait go-stats-api
+
+      - name: Coleção Postman contra a API
+        run: |
+          docker run --rm --network lobbysheriff_default \
+            -e BASE_URL=http://go-stats-api:8080 \
+            -v "$PWD":/repo -w /repo \
+            node:26-bookworm-slim scripts/contracts.sh newman go-stats-api
+
+      - name: Logs da stack
+        if: failure()
+        run: docker compose logs --no-color
 
   migrations:
     name: Migrations (MySQL 8.4)

@@ -25,6 +25,7 @@ paths:
   /livez:
     get:
       operationId: getLiveness
+      security: [] # público: usado por probes e monitorização
       summary: Liveness
       description: |
         Indica apenas que o processo está vivo. Não verifica o MySQL nem o Redis,
@@ -42,6 +43,7 @@ paths:
   /readyz:
     get:
       operationId: getReadiness
+      security: [] # público: usado por probes e monitorização
       summary: Readiness
       description: Pronto para receber tráfego quando todas as dependências estão disponíveis.
       tags: [health]
@@ -64,6 +66,7 @@ paths:
   /health:
     get:
       operationId: getHealth
+      security: [] # público: usado por probes e monitorização
       summary: Estado detalhado
       description: |
         Estado e latência de cada dependência. Os detalhes dos erros vão só para
@@ -133,10 +136,3 @@ components:
           items:
             type: string
 
-  responses:
-    BadRequest:
-      description: O pedido não cumpre o contrato
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"

@@ -1,7 +1,5 @@
 {
-  "_": {
-    "postman_id": "31aa4f27-4e51-47e0-b00d-271e9a6d923f"
-  },
+  "_": {},
   "item": [
     {
       "name": "health",
@@ -138,7 +136,7 @@
                   "// Validate response time \npm.test(\"[GET]::/health - Response time is less than 2000ms\", function () {\n    pm.expect(pm.response.responseTime).to.be.below(2000);\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[GET]::/health - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[GET]::/health - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"status\",\"checks\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"up\",\"down\"]},\"checks\":{\"type\":\"object\",\"description\":\"Resultado por dependência (mysql, redis, …)\",\"additionalProperties\":false}}}\n\n// Validate if response matches JSON schema \npm.test(\"[GET]::/health - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"status\",\"checks\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"up\",\"down\"]},\"checks\":{\"type\":\"object\",\"description\":\"Resultado por dependência (mysql, redis, …)\",\"additionalProperties\":{\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"status\",\"latency_ms\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"up\",\"down\"]},\"latency_ms\":{\"type\":\"integer\",\"format\":\"int64\",\"minimum\":0}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[GET]::/health - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }

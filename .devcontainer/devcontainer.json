@@ -2,7 +2,7 @@
   "name": "LobbySheriff",
   "dockerComposeFile": ["../docker-compose.yml", "compose.devcontainer.yml"],
   "service": "dev",
-  "runServices": ["dev", "mysql", "redis"],
+  "runServices": ["dev", "mysql", "redis", "swagger-ui"],
   "workspaceFolder": "/workspaces/lobbysheriff",
   "shutdownAction": "stopCompose",
   "remoteUser": "vscode",
@@ -20,12 +20,16 @@
       "helm": "none",
       "minikube": "none"
     },
+    // Node só para ferramentas de contratos (Redocly, Portman, Newman) e, mais tarde, o frontend.
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "26"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     // Usa o Docker do host: permite `docker compose` e `docker build` dentro do container.
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
 
-  "forwardPorts": [8080],
+  "forwardPorts": [8080, 8090],
 
   "customizations": {
     "vscode": {
@@ -34,7 +38,9 @@
         "ms-azuretools.vscode-containers",
         "docker.docker",
         "redhat.vscode-yaml",
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "42crunch.vscode-openapi",
+        "postman.postman-for-vscode"
       ],
       "settings": {
         "go.lintTool": "golangci-lint",

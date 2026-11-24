@@ -1,0 +1,12 @@
+# Exceções às regras do Redocly, sempre com o motivo.
+# Remover a entrada quando deixar de se aplicar.
+contracts/openapi/go-stats-api.yaml:
+  # As rotas de health não recebem input, por isso nunca devolvem 4xx.
+  operation-4xx-response:
+    - '#/paths/~1livez/get/responses'
+    - '#/paths/~1readyz/get/responses'
+    - '#/paths/~1health/get/responses'
+  # Error é o formato de todas as respostas de erro (validação, 404, 500), gerado
+  # no código Go; passa a ser referenciado quando existir a primeira rota com input.
+  no-unused-components:
+    - '#/components/schemas/Error'

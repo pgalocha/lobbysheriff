@@ -48,6 +48,9 @@ pnpm-debug.log*
 data/
 docker-compose.override.yml
 
+# ─── Temporários de ferramentas (ex.: Portman cria ./tmp/) ─────────
+/tmp/
+
 # ─── Logs ────────────────────────────────────────────────────────
 *.log
 logs/

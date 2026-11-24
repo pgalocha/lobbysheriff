@@ -48,13 +48,14 @@ postman() {
       const strip = (v) => Array.isArray(v) ? v.map(strip)
         : v && typeof v === "object"
           ? Object.fromEntries(Object.entries(v)
-              .filter(([k]) => !["id", "_postman_id", "_exporter_id"].includes(k))
+              .filter(([k]) => !["id", "_postman_id", "postman_id", "_exporter_id"].includes(k))
               .map(([k, x]) => [k, strip(x)]))
           : v;
       fs.writeFileSync(file, JSON.stringify(strip(JSON.parse(fs.readFileSync(file, "utf8"))), null, 2) + "\n");
     ' "$out"
     echo "✔ $out"
   done
+  rm -rf "$ROOT/tmp" # o Portman deixa ficheiros de trabalho em ./tmp
 }
 
 check_postman() {
