@@ -27,6 +27,7 @@ import (
 
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/config"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/database"
+	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/faceit"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/health"
 	"github.com/pgalocha/lobbysheriff/services/go-stats-api/internal/server"
 )
@@ -114,6 +115,21 @@ func runMigrate(cfg config.MySQL, args []string, logger *slog.Logger) error {
 }
 
 func run(cfg config.Config, logger *slog.Logger) error {
+	// A key da FACEIT só é exigida aqui: migrate e healthcheck não a usam.
+	if err := cfg.FACEIT.Validate(); err != nil {
+		return err
+	}
+	faceitClient, err := faceit.New(faceit.Options{
+		BaseURL: cfg.FACEIT.BaseURL,
+		APIKey:  cfg.FACEIT.APIKey,
+		Timeout: cfg.FACEIT.Timeout,
+	})
+	if err != nil {
+		return fmt.Errorf("cliente FACEIT: %w", err)
+	}
+	// Ainda sem consumidores: o worker de sincronização (internal/sync) vai recebê-lo.
+	_ = faceitClient
+
 	// sql.Open e redis.NewClient não abrem ligações: a app arranca mesmo com
 	// o MySQL/Redis em baixo, e o /readyz reporta-o até ficarem disponíveis.
 	db, err := database.Open(cfg.MySQL)

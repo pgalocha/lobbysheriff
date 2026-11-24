@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "match_id": "1-00000000-0000-0000-0000-00000000000a",
+      "game_id": "cs2",
+      "game_mode": "5v5",
+      "competition_name": "Europe 5v5 Queue",
+      "status": "FINISHED",
+      "started_at": 1764000000,
+      "finished_at": 1764002400,
+      "faceit_url": "https://www.faceit.com/{lang}/cs2/room/1-00000000-0000-0000-0000-00000000000a"
+    }
+  ],
+  "start": 0,
+  "end": 1,
+  "from": 1763000000,
+  "to": 1765000000
+}

@@ -1,0 +1,18 @@
+{
+  "player_id": "00000000-0000-0000-0000-000000000001",
+  "nickname": "sheriff",
+  "avatar": "https://example.test/avatar.png",
+  "country": "pt",
+  "faceit_url": "https://www.faceit.com/{lang}/players/sheriff",
+  "games": {
+    "cs2": {
+      "region": "EU",
+      "game_player_id": "76561190000000001",
+      "game_player_name": "sheriff",
+      "skill_level": 8,
+      "faceit_elo": 1780
+    }
+  },
+  "membership_type": "",
+  "verified": true
+}

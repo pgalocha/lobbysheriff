@@ -1,0 +1,22 @@
+{
+  "rounds": [
+    {
+      "match_id": "1-00000000-0000-0000-0000-00000000000a",
+      "best_of": "1",
+      "round_stats": {"Map": "de_mirage", "Score": "13 / 9", "Winner": "team-1", "Rounds": "22"},
+      "teams": [
+        {
+          "team_id": "team-1",
+          "team_stats": {"Team": "team_sheriff", "Final Score": "13", "Team Win": "1"},
+          "players": [
+            {
+              "player_id": "00000000-0000-0000-0000-000000000001",
+              "nickname": "sheriff",
+              "player_stats": {"Kills": "24", "Deaths": "15", "Assists": "4", "K/D Ratio": "1.6", "Headshots %": "50", "MVPs": "5"}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

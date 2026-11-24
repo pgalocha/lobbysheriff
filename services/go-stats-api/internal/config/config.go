@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Config é a configuração do go-stats-api.
@@ -20,6 +21,25 @@ type Config struct {
 	CORSAllowedOrigins []string
 	MySQL              MySQL
 	Redis              Redis
+	FACEIT             FACEIT
+}
+
+// FACEIT é o acesso à FACEIT Data API v4.
+//
+// A APIKey não é exigida pelo Load, porque os subcomandos migrate e
+// healthcheck não falam com a FACEIT; o servidor chama Validate no arranque.
+type FACEIT struct {
+	APIKey  string
+	BaseURL string
+	Timeout time.Duration
+}
+
+// Validate falha se faltar algo necessário para chamar a FACEIT.
+func (f FACEIT) Validate() error {
+	if f.APIKey == "" {
+		return errors.New("FACEIT_API_KEY é obrigatória")
+	}
+	return nil
 }
 
 // MySQL é a ligação ao schema do go-stats-api.
@@ -69,6 +89,11 @@ func Load() (Config, error) {
 			Host:     l.string("REDIS_HOST", "redis"),
 			Port:     l.port("REDIS_PORT", 6379),
 			Password: l.string("REDIS_PASSWORD", ""),
+		},
+		FACEIT: FACEIT{
+			APIKey:  l.string("FACEIT_API_KEY", ""),
+			BaseURL: l.string("FACEIT_API_BASE_URL", "https://open.faceit.com/data/v4"),
+			Timeout: l.duration("FACEIT_HTTP_TIMEOUT", 10*time.Second),
 		},
 	}
 
@@ -128,4 +153,22 @@ func (l loader) port(key string, fallback int) int {
 		return 0
 	}
 	return n
+}
+
+// duration lê uma duração no formato do Go (ex.: 10s, 1m30s); tem de ser positiva.
+func (l loader) duration(key string, fallback time.Duration) time.Duration {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		*l.errs = append(*l.errs, fmt.Errorf("%s inválida %q: %w", key, v, err))
+		return 0
+	}
+	if d <= 0 {
+		*l.errs = append(*l.errs, fmt.Errorf("%s tem de ser positiva: %s", key, d))
+		return 0
+	}
+	return d
 }
