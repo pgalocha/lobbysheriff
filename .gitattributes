@@ -1,0 +1,26 @@
+# Normaliza finais de linha para LF no repositório e no checkout
+# (evita scripts com CRLF a falhar dentro dos containers Linux).
+* text=auto eol=lf
+
+# Scripts Windows mantêm CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binários
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.pdf  binary
+
+# Ficheiros gerados — esconder dos diffs
+go.sum             linguist-generated=true -diff
+composer.lock      linguist-generated=true -diff
+package-lock.json  linguist-generated=true -diff
+pnpm-lock.yaml     linguist-generated=true -diff

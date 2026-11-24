@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Descomentar à medida que cada serviço for criado
+  # (o Dependabot dá erro se a pasta/manifesto ainda não existir).
+
+  # - package-ecosystem: gomod
+  #   directory: /services/go-stats-api
+  #   schedule:
+  #     interval: weekly
+
+  # - package-ecosystem: composer
+  #   directory: /services/php-players-api
+  #   schedule:
+  #     interval: weekly
+
+  # - package-ecosystem: npm
+  #   directory: /frontend
+  #   schedule:
+  #     interval: weekly
+
+  # - package-ecosystem: docker
+  #   directories:
+  #     - /services/go-stats-api
+  #     - /services/php-players-api
+  #     - /frontend
+  #   schedule:
+  #     interval: weekly
