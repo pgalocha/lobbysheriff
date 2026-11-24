@@ -85,3 +85,9 @@ docker compose up -d
 
 - [FACEIT Data API v4 — Documentação](https://docs.faceit.com/)
 - [FACEIT Developers Portal](https://developers.faceit.com/)
+
+## 📄 Licença
+
+© 2026 Pedro Galocha. Todos os direitos reservados.
+
+O código está publicamente visível apenas para consulta. Não é concedida qualquer licença de utilização, cópia, modificação ou distribuição — ver [LICENSE](LICENSE).

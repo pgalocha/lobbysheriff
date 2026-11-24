@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lobbysheriff-staging
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+labels:
+  - pairs:
+      app.kubernetes.io/environment: staging
+    includeSelectors: false
+
+# Configuração não sensível (versionada)
+configMapGenerator:
+  - name: lobbysheriff-config
+    envs:
+      - config.env
+
+# Secrets: secrets.env NÃO é versionado.
+# Localmente: copiar de secrets.env.example.
+# No CI: gerado a partir dos secrets do GitHub Environment "staging".
+secretGenerator:
+  - name: lobbysheriff-secrets
+    envs:
+      - secrets.env

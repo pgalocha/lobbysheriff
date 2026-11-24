@@ -1,0 +1,3 @@
+# Revisores por defeito de todo o repositório.
+# Só é obrigatório se o ruleset tiver "Require review from Code Owners".
+*       @pgalocha
