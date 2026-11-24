@@ -51,6 +51,10 @@ docker-compose.override.yml
 *.log
 logs/
 
+# ─── Agentes de IA (definições pessoais) ─────────────────────────
+.claude/settings.local.json
+CLAUDE.local.md
+
 # ─── IDE / SO ────────────────────────────────────────────────────
 .idea/
 .vscode/*
