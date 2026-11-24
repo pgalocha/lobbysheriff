@@ -51,8 +51,11 @@ O contrato em `contracts/openapi/<serviço>.yaml` é a fonte de verdade. Ordem o
 2. `scripts/contracts.sh lint`
 3. `go generate ./...` no serviço (regenera `internal/api/api.gen.go`; nunca editar à mão).
 4. Implementar os handlers (`api.ServerInterface`).
-5. `scripts/contracts.sh postman` (regenera a coleção; nunca editar à mão).
-6. Contrato, código gerado e coleção mudam juntos.
+5. Acrescentar casos a `TestResponsesMatchContract` (`internal/server/server_test.go`):
+   **um por cada resposta documentada** da operação (ex.: 200, 400, 404, 503), incluindo
+   os erros. O teste falha se alguma combinação operação + status ficar sem caso.
+6. `scripts/contracts.sh postman` (regenera a coleção; nunca editar à mão).
+7. Contrato, código gerado, testes e coleção mudam juntos.
 
 - Sem breaking changes (remover rotas, campos, valores aceites; tornar obrigatório o que era
   opcional). Se forem necessárias: nova operação, e a antiga fica `deprecated: true`.
@@ -73,7 +76,8 @@ O contrato em `contracts/openapi/<serviço>.yaml` é a fonte de verdade. Ordem o
 - Antes de dar uma tarefa por concluída: `gofmt`, `go vet`, `go test -race ./...` e
   `golangci-lint run ./...` sem erros.
 - Testes em tabela (`tests := []struct{…}`), com `t.Context()` e `httptest`.
-- Respostas HTTP novas ficam cobertas pelos testes de contrato (`assertMatchesContract`).
+- Cada resposta documentada no contrato tem um caso em `TestResponsesMatchContract`
+  (obrigatório: o teste falha sem ele). Lógica de negócio dos handlers tem testes próprios.
 - Configuração só por variáveis de ambiente (`internal/config`); falhar no arranque se faltar
   algo obrigatório.
 - Logs com `slog` em JSON. Detalhes de erros internos vão para o log, não para a resposta.

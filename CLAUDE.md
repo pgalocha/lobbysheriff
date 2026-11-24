@@ -60,8 +60,10 @@ Sem Dev Container, o toolchain corre em containers descartáveis, ex.:
   do Fiber e as do contrato coincidam.
 - `postman/<serviço>.postman_collection.json` é gerado pelo Portman (`scripts/contracts.sh
   postman`) com testes de contrato; o Newman corre-o contra a stack real.
-- Ordem ao mudar a API: contrato, lint, `go generate`, handlers, coleção Postman. Os quatro
-  mudam no mesmo commit. Breaking changes são bloqueadas pela CI (oasdiff).
+- Ordem ao mudar a API: contrato, lint, `go generate`, handlers, casos em
+  `TestResponsesMatchContract` (um por cada resposta documentada, incluindo erros; o teste
+  falha se faltar algum), coleção Postman. Tudo no mesmo commit. Breaking changes são
+  bloqueadas pela CI (oasdiff).
 
 **go-stats-api** (`cmd/server/main.go`): o binário tem subcomandos: sem argumentos arranca o
 servidor; `healthcheck` (usado pelo `HEALTHCHECK` da imagem distroless, sem curl); `migrate`.

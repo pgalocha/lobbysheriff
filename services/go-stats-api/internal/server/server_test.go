@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -74,7 +75,8 @@ func do(t *testing.T, app *fiber.App, req *http.Request) response {
 
 // assertMatchesContract valida a resposta (status, content-type e corpo)
 // contra o contrato OpenAPI. Status não documentados também falham.
-func assertMatchesContract(t *testing.T, router routers.Router, req *http.Request, res response) {
+// Devolve a chave "<operationId> <status>" da resposta validada.
+func assertMatchesContract(t *testing.T, router routers.Router, req *http.Request, res response) string {
 	t.Helper()
 	route, params, err := router.FindRoute(req)
 	if err != nil {
@@ -91,15 +93,62 @@ func assertMatchesContract(t *testing.T, router routers.Router, req *http.Reques
 		t.Errorf("resposta de %s %s (%d) não cumpre o contrato:\n%v\ncorpo: %s",
 			req.Method, req.URL.Path, res.status, err, res.body)
 	}
+	return fmt.Sprintf("%s %d", route.Operation.OperationID, res.status)
 }
 
+// assertAllResponsesCovered falha se alguma resposta documentada no contrato
+// (operação + status) não tiver um caso em TestResponsesMatchContract.
+// Status em intervalo (ex.: "4XX") ficam cobertos por qualquer status desse
+// intervalo; "default" não é exigido.
+func assertAllResponsesCovered(t *testing.T, covered map[string]bool) {
+	t.Helper()
+	doc, err := api.GetSpec()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	coveredRange := map[string]bool{}
+	for key := range covered {
+		op, status, _ := strings.Cut(key, " ")
+		coveredRange[op+" "+status[:1]+"XX"] = true
+	}
+
+	var missing []string
+	for path, item := range doc.Paths.Map() {
+		for method, op := range item.Operations() {
+			for status := range op.Responses.Map() {
+				key := op.OperationID + " " + status
+				switch {
+				case status == "default":
+				case strings.HasSuffix(strings.ToUpper(status), "XX"):
+					if !coveredRange[op.OperationID+" "+strings.ToUpper(status)] {
+						missing = append(missing, fmt.Sprintf("%s (%s %s → %s)", key, method, path, status))
+					}
+				case !covered[key]:
+					missing = append(missing, fmt.Sprintf("%s (%s %s → %s)", key, method, path, status))
+				}
+			}
+		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		t.Errorf("respostas do contrato sem caso em TestResponsesMatchContract:\n  %s\n"+
+			"acrescenta um caso por cada uma (ver contracts/README.md)", strings.Join(missing, "\n  "))
+	}
+}
+
+// Cada resposta documentada no contrato (operação + status, incluindo os de
+// erro) tem de ter aqui pelo menos um caso; o teste falha se faltar algum.
 func TestResponsesMatchContract(t *testing.T) {
 	down := errors.New("connection refused")
 	router := newContractRouter(t)
+	covered := map[string]bool{}
 
 	tests := []struct {
 		name     string
+		method   string // por omissão GET
 		path     string
+		body     string // JSON; vazio = sem corpo
 		redisErr error
 		want     int
 	}{
@@ -113,15 +162,32 @@ func TestResponsesMatchContract(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, tt.path, http.NoBody)
-			res := do(t, newApp(t, tt.redisErr, Options{}), req)
-
-			if res.status != tt.want {
-				t.Fatalf("GET %s = %d, esperava %d", tt.path, res.status, tt.want)
+			method := tt.method
+			if method == "" {
+				method = http.MethodGet
 			}
-			assertMatchesContract(t, router, req, res)
+			newReq := func() *http.Request {
+				var body io.Reader = http.NoBody
+				if tt.body != "" {
+					body = strings.NewReader(tt.body)
+				}
+				req := httptest.NewRequestWithContext(t.Context(), method, tt.path, body)
+				if tt.body != "" {
+					req.Header.Set("Content-Type", "application/json")
+				}
+				return req
+			}
+
+			res := do(t, newApp(t, tt.redisErr, Options{}), newReq())
+			if res.status != tt.want {
+				t.Fatalf("%s %s = %d, esperava %d (corpo: %s)", method, tt.path, res.status, tt.want, res.body)
+			}
+			// Pedido novo: o corpo do primeiro já foi consumido pela app.
+			covered[assertMatchesContract(t, router, newReq(), res)] = true
 		})
 	}
+
+	assertAllResponsesCovered(t, covered)
 }
 
 var pathParam = regexp.MustCompile(`\{([^}]+)\}`)
