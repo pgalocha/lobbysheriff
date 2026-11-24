@@ -16,7 +16,8 @@ import (
 // Key falsa: os testes nunca usam a key real (ver regras do projeto).
 const testKey = "test-key"
 
-// fixtures são respostas sintéticas no formato da FACEIT (sem dados reais).
+// fixtures têm a estrutura de respostas reais da FACEIT (validada em
+// 2026-11-24), com IDs, nicknames e valores sintéticos.
 var fixtures = os.DirFS("testdata")
 
 // recorder guarda os pedidos recebidos pelo servidor falso. O handler corre
@@ -151,8 +152,16 @@ func TestGetPlayerStats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetPlayerStats: %v", err)
 	}
-	if s.GameID != "cs2" || s.Lifetime["Average K/D Ratio"] != "1.12" {
-		t.Errorf("stats = %+v", s)
+	// Atenção: no lifetime, "K/D Ratio" e "Total Headshots %" são somas;
+	// as médias estão em "Average K/D Ratio" e "Average Headshots %".
+	want := map[string]any{"Matches": "412", "Win Rate %": "53", "Average K/D Ratio": "1.12", "Average Headshots %": "48", "ADR": "79.3"}
+	if s.GameID != "cs2" {
+		t.Errorf("GameID = %q", s.GameID)
+	}
+	for k, v := range want {
+		if got := s.Lifetime[k]; got != v {
+			t.Errorf("Lifetime[%q] = %v, esperava %v", k, got, v)
+		}
 	}
 }
 
@@ -185,10 +194,10 @@ func TestGetPlayerHistory(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetPlayerHistory: %v", err)
 			}
-			if len(h.Items) != 1 || h.Items[0].Status != "FINISHED" || h.Items[0].FinishedAt != 1764002400 {
+			if len(h.Items) != 1 || h.Items[0].Status != "finished" || h.Items[0].FinishedAt != 1764002400 {
 				t.Errorf("history = %+v", h)
 			}
-			if r := h.Items[0].Results; r.Winner != "faction1" || r.Score["faction1"] != 1 {
+			if r := h.Items[0].Results; r.Winner != "faction1" || r.Score["faction1"] != 13 {
 				t.Errorf("results = %+v", r)
 			}
 			q := reqs.all()[0].URL.Query()
@@ -217,16 +226,15 @@ func TestGetMatchStats(t *testing.T) {
 	if pl.Nickname != "sheriff" {
 		t.Errorf("player = %+v", pl)
 	}
-	// O fixture mistura strings, números, booleanos e null (o contrato da
-	// FACEIT não fixa o tipo); tudo fica normalizado para string.
-	want := map[string]string{"Kills": "24", "Deaths": "15", "K/D Ratio": "1.6", "Result": "true"}
+	// As chaves usadas para preencher player_match_stats.
+	want := map[string]string{
+		"Kills": "24", "Deaths": "15", "Assists": "4", "Headshots": "12", "MVPs": "5",
+		"K/D Ratio": "1.6", "ADR": "96.4", "Headshots %": "50", "Result": "1",
+	}
 	for k, v := range want {
 		if got := pl.PlayerStats[k]; got != v {
 			t.Errorf("PlayerStats[%q] = %q, esperava %q", k, got, v)
 		}
-	}
-	if _, ok := pl.PlayerStats["ADR"]; ok {
-		t.Error("valores null devem ser ignorados")
 	}
 }
 
@@ -240,6 +248,7 @@ func TestStatValuesUnmarshal(t *testing.T) {
 		{name: "strings", in: `{"Map":"de_mirage"}`, want: StatValues{"Map": "de_mirage"}},
 		{name: "escapes JSON", in: `{"Team":"a\u00e7\"b"}`, want: StatValues{"Team": "aç\"b"}},
 		{name: "número e booleano", in: `{"Kills":24,"Win":false}`, want: StatValues{"Kills": "24", "Win": "false"}},
+		{name: "null é ignorado", in: `{"ADR":null,"Kills":"3"}`, want: StatValues{"Kills": "3"}},
 		{name: "objeto fica em JSON", in: `{"x":{"a":1}}`, want: StatValues{"x": `{"a":1}`}},
 		{name: "null no topo", in: `null`, want: nil},
 		{name: "não é objeto", in: `[1,2]`, wantErr: true},
