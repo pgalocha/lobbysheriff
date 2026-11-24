@@ -298,6 +298,14 @@ func TestInvalidArguments(t *testing.T) {
 			return err
 		}},
 		{name: "match_id vazio", call: func(ctx context.Context) error { _, err := c.GetMatchStats(ctx, ""); return err }},
+		{name: "match stats offset > 200", call: func(ctx context.Context) error {
+			_, err := c.GetPlayerMatchStats(ctx, "p1", GameCS2, MatchStatsOptions{Offset: 201})
+			return err
+		}},
+		{name: "match stats sem jogo", call: func(ctx context.Context) error {
+			_, err := c.GetPlayerMatchStats(ctx, "p1", "", MatchStatsOptions{})
+			return err
+		}},
 	}
 
 	for _, tt := range tests {
@@ -476,4 +484,138 @@ func TestRateLimitRespectsContext(t *testing.T) {
 	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
 		t.Errorf("esperou %s; devia desistir dentro do prazo do contexto", elapsed)
 	}
+}
+
+func TestGetPlayerMatchStats(t *testing.T) {
+	from := time.Unix(1763000000, 0)
+	to := time.Unix(1765000000, 0)
+
+	tests := []struct {
+		name      string
+		opts      MatchStatsOptions
+		wantQuery map[string]string
+	}{
+		{
+			name:      "sem filtros",
+			opts:      MatchStatsOptions{},
+			wantQuery: map[string]string{"from": "", "to": "", "offset": "", "limit": ""},
+		},
+		{
+			// Este endpoint usa milissegundos (o /history usa segundos).
+			name:      "intervalo em milissegundos e paginação",
+			opts:      MatchStatsOptions{From: from, To: to, Offset: 200, Limit: 100},
+			wantQuery: map[string]string{"from": "1763000000000", "to": "1765000000000", "offset": "200", "limit": "100"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, reqs := fakeFACEIT(t, map[string]string{"GET /data/v4/players/p1/games/cs2/stats": "player_match_stats_list.json"})
+
+			l, err := c.GetPlayerMatchStats(t.Context(), "p1", GameCS2, tt.opts)
+			if err != nil {
+				t.Fatalf("GetPlayerMatchStats: %v", err)
+			}
+			q := reqs.all()[0].URL.Query()
+			for k, want := range tt.wantQuery {
+				if got := q.Get(k); got != want {
+					t.Errorf("query %s = %q, esperava %q", k, got, want)
+				}
+			}
+
+			if len(l.Items) != 2 {
+				t.Fatalf("items = %d, esperava 2", len(l.Items))
+			}
+			first := l.Items[0]
+			if first.MatchID() != "1-00000000-0000-0000-0000-00000000000a" {
+				t.Errorf("MatchID = %q", first.MatchID())
+			}
+			// "Match Finished At" vem como número (ms); StatValues normaliza-o.
+			if at, ok := first.FinishedAt(); !ok || !at.Equal(time.Unix(1764002400, 0)) {
+				t.Errorf("FinishedAt = %s, %v", at, ok)
+			}
+			want := map[string]string{"Map": "de_mirage", "Result": "1", "Kills": "24", "ADR": "96.4", "K/D Ratio": "1.6"}
+			for k, v := range want {
+				if got := first.Stats[k]; got != v {
+					t.Errorf("Stats[%q] = %q, esperava %q", k, got, v)
+				}
+			}
+		})
+	}
+}
+
+func TestPlayerMatchStatsFinishedAtInvalid(t *testing.T) {
+	for _, v := range []string{"", "abc", "0", "-5"} {
+		s := PlayerMatchStats{Stats: StatValues{"Match Finished At": v}}
+		if _, ok := s.FinishedAt(); ok {
+			t.Errorf("FinishedAt(%q) devia falhar", v)
+		}
+	}
+}
+
+func TestMatchSummaryTeams(t *testing.T) {
+	c, _ := fakeFACEIT(t, map[string]string{"GET /data/v4/players/p1/history": "history.json"})
+	h, err := c.GetPlayerHistory(t.Context(), "p1", HistoryOptions{Game: GameCS2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := h.Items[0]
+	if m.CompetitionType != "matchmaking" {
+		t.Errorf("CompetitionType = %q", m.CompetitionType)
+	}
+
+	const (
+		sheriff = "00000000-0000-0000-0000-000000000001"
+		deputy  = "00000000-0000-0000-0000-000000000002"
+		outlaw  = "00000000-0000-0000-0000-000000000009"
+	)
+	nicks := func(ps []HistoryPlayer) []string {
+		var out []string
+		for _, p := range ps {
+			out = append(out, p.Nickname)
+		}
+		return out
+	}
+
+	tests := []struct {
+		name          string
+		playerID      string
+		wantFaction   string
+		wantWon       bool
+		wantOK        bool
+		wantTeammates []string
+		wantOpponents []string
+	}{
+		{name: "vencedor", playerID: sheriff, wantFaction: "faction1", wantWon: true, wantOK: true, wantTeammates: []string{"deputy"}, wantOpponents: []string{"outlaw"}},
+		{name: "colega de equipa", playerID: deputy, wantFaction: "faction1", wantWon: true, wantOK: true, wantTeammates: []string{"sheriff"}, wantOpponents: []string{"outlaw"}},
+		{name: "derrotado", playerID: outlaw, wantFaction: "faction2", wantWon: false, wantOK: true, wantTeammates: nil, wantOpponents: []string{"sheriff", "deputy"}},
+		{name: "não jogou", playerID: "x", wantOK: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			faction, ok := m.FactionOf(tt.playerID)
+			if faction != tt.wantFaction || ok != tt.wantOK {
+				t.Errorf("FactionOf = %q, %v", faction, ok)
+			}
+			won, ok := m.Won(tt.playerID)
+			if won != tt.wantWon || ok != tt.wantOK {
+				t.Errorf("Won = %v, %v", won, ok)
+			}
+			if got := nicks(m.Teammates(tt.playerID)); strings.Join(got, ",") != strings.Join(tt.wantTeammates, ",") {
+				t.Errorf("Teammates = %v, esperava %v", got, tt.wantTeammates)
+			}
+			if got := nicks(m.Opponents(tt.playerID)); strings.Join(got, ",") != strings.Join(tt.wantOpponents, ",") {
+				t.Errorf("Opponents = %v, esperava %v", got, tt.wantOpponents)
+			}
+		})
+	}
+
+	t.Run("sem vencedor", func(t *testing.T) {
+		m2 := m
+		m2.Results.Winner = ""
+		if _, ok := m2.Won(sheriff); ok {
+			t.Error("Won devia devolver ok=false sem vencedor")
+		}
+	})
 }

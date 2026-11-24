@@ -23,6 +23,15 @@
               "game_player_id": "76561190000000001",
               "game_player_name": "sheriff",
               "faceit_url": "https://www.faceit.com/{lang}/players/sheriff"
+            },
+            {
+              "player_id": "00000000-0000-0000-0000-000000000002",
+              "nickname": "deputy",
+              "avatar": "https://example.test/deputy.jpg",
+              "skill_level": 7,
+              "game_player_id": "76561190000000002",
+              "game_player_name": "deputy",
+              "faceit_url": "https://www.faceit.com/{lang}/players/deputy"
             }
           ]
         },
@@ -31,10 +40,24 @@
           "nickname": "team_rival",
           "avatar": "https://example.test/rival.jpg",
           "type": "",
-          "players": []
+          "players": [
+            {
+              "player_id": "00000000-0000-0000-0000-000000000009",
+              "nickname": "outlaw",
+              "avatar": "https://example.test/outlaw.jpg",
+              "skill_level": 9,
+              "game_player_id": "76561190000000009",
+              "game_player_name": "outlaw",
+              "faceit_url": "https://www.faceit.com/{lang}/players/outlaw"
+            }
+          ]
         }
       },
-      "playing_players": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000009"],
+      "playing_players": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000009"
+      ],
       "competition_id": "00000000-0000-0000-0000-0000000000c1",
       "competition_name": "Europe 5v5 Queue",
       "competition_type": "matchmaking",
@@ -42,7 +65,13 @@
       "status": "finished",
       "started_at": 1764000000,
       "finished_at": 1764002400,
-      "results": {"winner": "faction1", "score": {"faction1": 13, "faction2": 9}},
+      "results": {
+        "winner": "faction1",
+        "score": {
+          "faction1": 13,
+          "faction2": 9
+        }
+      },
       "faceit_url": "https://www.faceit.com/{lang}/cs2/room/1-00000000-0000-0000-0000-00000000000a"
     }
   ],
